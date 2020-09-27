@@ -2,7 +2,7 @@
   "compileOnSave": true,
   "compilerOptions": {
     "target": "ESNext",
-    "module": "CommonJS",
+    "module": "esnext",
     "esModuleInterop": true,
     "strict": true,
     "allowJs": false,
@@ -20,9 +20,6 @@
     "noEmit": true,
     "jsx": "react"
   },
-  "files": [
-    "server.ts"
-  ],
   "exclude": [
     "./node_modules"
   ],

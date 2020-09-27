@@ -1,2 +1,5 @@
-sans-car-website/.env
-sans-car-website/keys/
+.env
+keys/*
+
+node_modules/
+build/*
