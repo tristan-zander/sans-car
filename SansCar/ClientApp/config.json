@@ -1,0 +1,6 @@
+{
+  "httpPort": 5080,
+  "httpsPort": 5000,
+  "fallbackPort": 8000,
+  "certificate": "keys/website.pfx"
+}
