@@ -28,7 +28,7 @@ namespace Bot
                 .Build();
                 */
 
-#if DEBUG
+            #if DEBUG
             var token = Environment.GetEnvironmentVariable("DEV_TOKEN");
             #else
             var token = Environment.GetEnvironmentVariable("TOKEN");
