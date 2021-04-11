@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net5.0</TargetFramework>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="DSharpPlus" Version="4.0.0-rc3" />
+      <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-rc3" />
+      <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-rc3" />
+      <PackageReference Include="DSharpPlus.Lavalink" Version="4.0.0-rc3" />
+      <PackageReference Include="Microsoft.Extensions.Configuration" Version="6.0.0-preview.3.21201.4" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0-preview.3.21201.4" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Resources\sans-car.jpg" />
+      <Resource Include="Resources\sans-car.jpg">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Resource>
+      <None Remove="Resources\bring-me-the-girl.png" />
+      <Resource Include="Resources\bring-me-the-girl.png" />
+    </ItemGroup>
+
+</Project>

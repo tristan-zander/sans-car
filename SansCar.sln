@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SansCar", "SansCar\SansCar.csproj", "{D811529B-2688-4B5E-9540-5E6BD7A61C74}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Website", "Website\Website.csproj", "{D811529B-2688-4B5E-9540-5E6BD7A61C74}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bot", "Bot\Bot.csproj", "{978FFD7A-9B7E-4A4C-977A-E6C04F9F3F2A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -12,5 +14,9 @@ Global
 		{D811529B-2688-4B5E-9540-5E6BD7A61C74}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D811529B-2688-4B5E-9540-5E6BD7A61C74}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D811529B-2688-4B5E-9540-5E6BD7A61C74}.Release|Any CPU.Build.0 = Release|Any CPU
+		{978FFD7A-9B7E-4A4C-977A-E6C04F9F3F2A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{978FFD7A-9B7E-4A4C-977A-E6C04F9F3F2A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{978FFD7A-9B7E-4A4C-977A-E6C04F9F3F2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{978FFD7A-9B7E-4A4C-977A-E6C04F9F3F2A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
