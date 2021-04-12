@@ -16,12 +16,10 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="Resources\sans-car.jpg" />
+      <Resource Include="Resources\bring-me-the-girl.png" />
       <Resource Include="Resources\sans-car.jpg">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Resource>
-      <None Remove="Resources\bring-me-the-girl.png" />
-      <Resource Include="Resources\bring-me-the-girl.png" />
     </ItemGroup>
 
 </Project>
