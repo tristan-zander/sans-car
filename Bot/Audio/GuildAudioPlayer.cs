@@ -12,12 +12,12 @@ namespace Bot.Audio
 
         private DiscordMember _currentMember;
 
-        public LinkedList<Song> SongQueue { get; private set; }
+        public LinkedList<SongInfo> SongQueue { get; private set; }
 
         public GuildAudioPlayer(DiscordClient bot, DiscordGuild guild)
         {
             _currentMember = guild.CurrentMember;
-            SongQueue = new LinkedList<Song>();
+            SongQueue = new LinkedList<SongInfo>();
         }
 
         public void QueueSong(string search)

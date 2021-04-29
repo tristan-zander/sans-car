@@ -10,3 +10,5 @@ riderModule.iml
 
 config.json
 **/config.json
+
+*.DotSettings.user

@@ -4,12 +4,12 @@ using DSharpPlus.Lavalink;
 
 namespace Bot.Audio
 {
-    public class Song
+    public class SongInfo
     {
         public string Name { get; private set; }
         public LavalinkLoadResult Info { get; private set; }
 
-        public Song(LavalinkLoadResult res)
+        public SongInfo(LavalinkLoadResult res)
         {
             switch (res.LoadResultType)
             {
