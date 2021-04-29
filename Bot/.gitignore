@@ -1,13 +1,7 @@
 obj/
 bin/
 
-# Ignore environment configuration variables.
-.env
-
 # Suppress Lavalank files
 Lavalink.jar
 logs/
 application.yml
-
-# Don't upload your personal config!
-config.json

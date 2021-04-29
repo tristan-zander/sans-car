@@ -11,7 +11,14 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Dapper" Version="2.0.78" />
         <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="5.0.4" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.5" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="5.0.5">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.Design" Version="1.1.0" />
     </ItemGroup>
 
     <ItemGroup>
@@ -27,6 +34,10 @@
 
     <ItemGroup>
       <Folder Include="ClientApp" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Data\Data.csproj" />
     </ItemGroup>
 
     <Target Name="DebugEnsureNodeEnv" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('$(SpaRoot)node_modules') ">

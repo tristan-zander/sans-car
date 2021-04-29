@@ -1,63 +1,77 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Bot.Commands;
+using Data;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
-using DSharpPlus.Entities;
+using DSharpPlus.Lavalink;
+using DSharpPlus.Net;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+using LavalinkConfiguration = DSharpPlus.Lavalink.LavalinkConfiguration;
 
 namespace Bot
 {
-    class Program 
+    class Program
     {
         static void Main(string[] args)
         {
-            var res = RunBot().GetAwaiter().GetResult();
-            Environment.Exit(res);
+            var client = RunBot().GetAwaiter().GetResult();
+
+            Task.Delay(-1).Wait();
+
+            // TODO: be able to restart the bot on a whim if you're an admin.
+            client.StopAsync().Wait();
         }
 
-        static async Task<int> RunBot()
+        static async Task<DiscordShardedClient> RunBot()
         {
-            #if DEBUG
-            var workingDir = Path.GetFullPath("./", Directory.GetCurrentDirectory());
-            var envPath = Path.Combine(workingDir, ".env");
-            DotEnv.Load(envPath);
-            
-            Console.WriteLine($"Working Directory: {workingDir}");
-            var token = Environment.GetEnvironmentVariable("DEV_TOKEN");
-            #else
-            // Get it from Docker otherwise.
-            var token = Environment.GetEnvironmentVariable("TOKEN");
-            #endif
+            #region InitialBotConfig
 
-            if (token == null)
+            FullConfiguration projectConfig = null;
+            
+            var dockerSecret = Environment.GetEnvironmentVariable("DOCKER_SECRET");
+            if (dockerSecret != null)
+            {
+                // Get the project files from docker.
+                throw new NotImplementedException("The bot currently isn't meant to be run under docker yet!");
+            }
+            else
+            {
+                projectConfig = ProjectConfiguration.ReadConfigFile();
+            }
+
+            if (projectConfig.Bot.Token == null)
             {
                 throw new Exception("Did not assign environment tokens to TOKEN or DEV_TOKEN.");
             }
-            
+
             var config = new DiscordConfiguration
             {
-                Token = token,
+                Token = projectConfig.Bot.Token,
                 TokenType = TokenType.Bot,
                 Intents = DiscordIntents.AllUnprivileged
             };
 
             var bot = new DiscordShardedClient(config);
 
+            var dbContext = new SansDbContext(projectConfig.Database.ConnectionString);
+
             var services = new ServiceCollection()
                 .AddSingleton(bot.Logger)
+                .AddSingleton(dbContext)
                 .BuildServiceProvider();
 
             var commands = await bot.UseCommandsNextAsync(
                 new CommandsNextConfiguration
                 {
-                    StringPrefixes = new[] {"sans ", "sans"},
+                    StringPrefixes = projectConfig.Bot.Prefixes ?? new [] {"sans ", "s?"},
                     Services = services
                 });
-            // Do I need to register commands for every single CommandsNextExtension?
+            
             foreach (var shard in bot.ShardClients.Keys)
             {
                 commands[shard]?.RegisterCommands(Assembly.GetExecutingAssembly());
@@ -66,10 +80,41 @@ namespace Bot
             var searchCommands = new SearchCommands(bot.Logger);
             bot.MessageCreated += searchCommands.SearchCommandsEvent;
 
+            #endregion InitialBotConfig
+
             await bot.StartAsync();
-            await Task.Delay(-1);
-            
-            return 0;
+
+            #region LavaLinkConfig
+
+            var endpoint = new ConnectionEndpoint
+            {
+                Hostname = "127.0.0.1", // From your server configuration.
+                Port = 2333 // From your server configuration
+            };
+
+            var lavalinkConfig = new LavalinkConfiguration
+            {
+                // TODO: Get password from config
+                Password = "youshallnotpass", // From your server configuration.
+                RestEndpoint = endpoint,
+                SocketEndpoint = endpoint
+            };
+
+            var lavalink = await bot.UseLavalinkAsync();
+            var linkResults = lavalink.Values.Select(link => link.ConnectAsync(lavalinkConfig));
+            foreach (var linkResult in linkResults)
+            {
+                await linkResult;
+            }
+
+            #endregion
+
+            /* TODO: Add OAuth to the website and implement this.
+            await bot.UpdateStatusAsync(
+                new DiscordActivity("Type \"sans help\" for help.", ActivityType.Playing));
+            */
+
+            return bot;
         }
     }
 }

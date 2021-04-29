@@ -94,11 +94,10 @@ namespace Bot.Commands
 
         public async Task Execute(DiscordClient sender, MessageCreateEventArgs args)
         {
-            var imageFile = MediaResources.GetImage("sans-car.jpg");
+            await using var imageFile = MediaResources.GetImage("sans-car.jpg");
             var message = new DiscordMessageBuilder()
                 .WithFile(imageFile);
             await args.Message.RespondAsync(message);
-            await imageFile.DisposeAsync();
         }
     }
 
@@ -128,11 +127,10 @@ namespace Bot.Commands
 
         public async Task Execute(DiscordClient sender, MessageCreateEventArgs args)
         {
-            var imageFile = MediaResources.GetImage("bring-me-the-girl.png");
+            await using var imageFile = MediaResources.GetImage("bring-me-the-girl.png");
             var message = new DiscordMessageBuilder()
                 .WithFile(imageFile);
             await args.Message.RespondAsync(message);
-            await imageFile.DisposeAsync();
         }
     }
 }
