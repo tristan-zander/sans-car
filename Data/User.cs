@@ -1,29 +1,26 @@
-using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using DSharpPlus;
 using DSharpPlus.Entities;
+using DSharpPlus.Net;
 
 namespace Data
 {
     public class User
     {
+        /// <summary>
+        /// Analogous to the Discord user's ID snowflake.
+        /// </summary>
         [Key] public ulong Id { get; set; }
-
-        [Required] public string Name { get; set; }
-
-        public bool HasAccount { get; set; }
 
         public User(DiscordUser user)
         {
             Id = user.Id;
-            Name = user.Username;
-            HasAccount = false;
         }
 
-        public User(ulong id, string name)
+        public User(ulong id)
         {
             Id = id;
-            Name = name;
-            HasAccount = false;
         }
     }
 }

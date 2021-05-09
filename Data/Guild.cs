@@ -9,5 +9,7 @@ namespace Data
         [Key]
         public ulong GuildId { get; set; }
         public List<Quote> Quotes { get; set; } = new List<Quote>();
+        
+        public AudioPlayer? AudioPlayer { get; set; }
     }
 }

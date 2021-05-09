@@ -1,4 +1,6 @@
 using System.Threading.Tasks;
+using Bot.Convertors;
+using Bot.Intermediary_Message_Types;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
@@ -14,6 +16,12 @@ namespace Bot.Commands
         public async Task Ping(CommandContext ctx)
         {
             await ctx.RespondAsync($"Ping time: {ctx.Client.Ping}ms");
+        }
+
+        [Command]
+        public async Task Test(CommandContext ctx, [RemainingText] MessageArg message)
+        {
+            await ctx.RespondAsync($"Test succeeded: {message.Content}");
         }
     }
 }

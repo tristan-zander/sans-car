@@ -7,10 +7,5 @@ namespace Data
     public class Channel
     {
         [Key] public ulong Id { get; set; }
-
-        public DiscordChannel ToDiscordChannel()
-        {
-            throw new NotImplementedException();
-        }
     }
 }

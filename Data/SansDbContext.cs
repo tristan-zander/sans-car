@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 
 namespace Data
 {
@@ -9,9 +8,8 @@ namespace Data
         
         public DbSet<Guild> Guilds { get; set; }
         public DbSet<User> Users { get; set; }
-        public DbSet<SongQueue> SongQueues { get; set; }
         public DbSet<Quote> Quotes { get; set; }
-
+        
         public SansDbContext()
         {
             ConnectionString = ProjectConfiguration.ReadConfigFile().Database.ConnectionString;

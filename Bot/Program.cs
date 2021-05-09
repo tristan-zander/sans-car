@@ -5,9 +5,14 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Bot.Commands;
+using Bot.Convertors;
+using Bot.Intermediary_Message_Types;
 using Data;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
+using DSharpPlus.Interactivity;
+using DSharpPlus.Interactivity.Enums;
+using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.Lavalink;
 using DSharpPlus.Net;
 using Microsoft.Extensions.DependencyInjection;
@@ -58,6 +63,13 @@ namespace Bot
 
             var bot = new DiscordShardedClient(config);
 
+            await bot.UseInteractivityAsync(new InteractivityConfiguration
+            {
+                PollBehaviour = PollBehaviour.DeleteEmojis,
+                Timeout = TimeSpan.FromSeconds(30),
+                PaginationBehaviour = PaginationBehaviour.WrapAround,
+            });
+
             var dbContext = new SansDbContext(projectConfig.Database.ConnectionString);
 
             var services = new ServiceCollection()
@@ -75,6 +87,7 @@ namespace Bot
             foreach (var shard in bot.ShardClients.Keys)
             {
                 commands[shard]?.RegisterCommands(Assembly.GetExecutingAssembly());
+                commands[shard]?.RegisterConverter(new ParseArgsConvertor<MessageArg>());
             }
 
             var searchCommands = new SearchCommands(bot.Logger);
