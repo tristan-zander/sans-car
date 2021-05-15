@@ -2,7 +2,7 @@ import './index.css'
 
 import React from 'react'
 
-import {Navbar, NavbarItem} from './components/Navbar/widget'
+import {Navbar, NavbarItem} from './components/Navbar/Navbar'
 import {Home, MainWindow } from './layouts/Home/Home';
 
 function App() {
@@ -17,9 +17,9 @@ function App() {
   return (
     <div>
       <Navbar>
-        <NavbarItem title = "About" location = "/about" />
         <NavbarItem title = "Home" location = "/" />
         <NavbarItem title = "Add bot" location = "/add-bot" />
+        <NavbarItem title = "Log In" location = "/login" />
       </Navbar>
     <Home>
       <MainWindow />

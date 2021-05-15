@@ -35,5 +35,11 @@ namespace Data
             TimeAdded = other.TimeAdded;
             BlamedUser = user ?? other.BlamedUser;
         }
+
+        // TODO: Remove any backticks that don't have closing backticks.
+        public string NormalizeMessage()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

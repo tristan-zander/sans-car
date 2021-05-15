@@ -1,5 +1,5 @@
 import '../../index.css';
-import "./style.css";
+import "./Navbar.css";
 
 import React from 'react'
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import './style.css'
+import './CommandRotationWidget.css'
 
 const tempCommands = {
 	'ping': {
@@ -37,7 +37,7 @@ export function CommandRotationWidget(props) {
 				{ tempCommands[key].subcommands?.map(subc => <div><h2>{subc.name}</h2><p>{subc.description}</p></div>)  }
 			</div>
 		)	
-	});
+	})
 	
 	let [index, setIndex] = useState(0)
 	

@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using Data;
@@ -21,8 +19,8 @@ namespace Bot.Commands
     [Description("Manage quotes from your server.")]
     public class QuoteCommands : BaseCommandModule
     {
-        public SansDbContext Context { get; private set; }
-        public ILogger<BaseDiscordClient> Logger { get; private set; }
+        private SansDbContext Context { get; }
+        private ILogger<BaseDiscordClient> Logger { get; }
 
         public QuoteCommands(SansDbContext context, ILogger<BaseDiscordClient> logger)
         {
@@ -68,7 +66,7 @@ namespace Bot.Commands
                 
                 // TODO assert that the quote was successfully created.
 
-                await ctx.RespondAsync($"Successfully added quote: ```{entity.Entity.Message}```");
+                await ctx.RespondAsync($"Successfully added quote: ```{entity.Entity.Message.Replace("`", "")}```");
             }
             catch (Exception e)
             {
@@ -97,16 +95,22 @@ namespace Bot.Commands
                         QuoteId = quote.QuoteId, Guild = quote.Guild
                     }).Take(50).ToList();
 
+                if (quotesQuery.Count <= 0)
+                {
+                    await ctx.RespondAsync("Looks like you don't have any quotes on this server yet :(");
+                    return;
+                }
+
                 var output = new StringBuilder();
 
                 foreach (var quote in quotesQuery)
                 {
                     var user = await ctx.Client.GetUserAsync(quote.BlamedUser.Id);
-                    output.Append($"```{quote.Message}```{user.Mention} on {quote.TimeAdded:d}\n\n");
+                    output.Append($"```{quote.Message.Replace("`", "")}```{user.Mention} on {quote.TimeAdded:d}\n\n");
                 }
                 // remove the final 2 endlines.
                 output.Remove(output.Length - 2, 2);
-                
+
                 var embedBuilder = new DiscordEmbedBuilder().WithColor(DiscordColor.Blue);
                 var interact = ctx.Client.GetInteractivity();
                 var pages= interact.GeneratePagesInEmbed(output.ToString(), SplitType.Line, embedBuilder);
