@@ -26,6 +26,8 @@
         <Content Remove="$(SpaRoot)**" />
         <None Remove="$(SpaRoot)**" />
         <None Include="$(SpaRoot)**" Exclude="$(SpaRoot)node_modules\**" />
+        <None Include="wwwroot\css\index.css" />
+        <None Include="wwwroot\images\sanscar.jpg" />
     </ItemGroup>
 
     <ItemGroup>

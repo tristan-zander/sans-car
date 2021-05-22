@@ -1,10 +1,12 @@
 .home-container {
     margin: 0;
     padding: 0;
-    height: calc(100vh - var(--nav-size) - var(--footer-size));
     color: var(--text-color);
+    overflow-y: auto;
     background-color: var(--bg);
     display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .home-item {
@@ -14,7 +16,7 @@
 }
 
 .main-window {
-    width: 60vw;
+    width: 80%;
     margin: 0;
     padding: 2rem;
     overflow: hidden;

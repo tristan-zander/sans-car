@@ -1,0 +1,66 @@
+@page
+@model SansCar.Pages.Index
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <link href="@Url.Content("~/css/index.css")" rel="stylesheet" type="text/css" />
+    <title>Sans Car Home Page</title>
+</head>
+<body class="container">
+<header class="container">
+    <ul class="navbar">
+        <li class="nav-item">Home</li>
+        <li class="nav-item">Add Bot</li>
+        <li class="nav-item nav-align-left">Coming soon: Dashboard</li>
+    </ul>
+</header>
+<div class="main-container">
+    <div class="container main-info">
+        <div class="container image-and-title">
+            <img src="images/sanscar.jpg" class="sans-image-container" alt="The original sans car meme."/>
+            <h1 class="title">Sans Car</h1>
+        </div>
+        <p>
+            Sans car can manage your quotes, play audio, and
+            (in the future) manage roles and channels. Just say "sans car" anywhere in a server or "sans help" for a list of
+            commands.
+        </p>
+    </div>
+    <div class="call-to-action">
+        <!-- TODO: Make this from a model. (no hardcoding) -->
+        <a href="https://sanscar.net/add-bot">
+            <button class="add-sans-car-button">Add sans to your server</button>
+        </a>
+    </div>
+</div>
+<div class="features-container">
+    <div>
+        <h1>Quotes</h1>
+        <p>This is some placeholder text that will talk about how sans can manage your quotes.</p>
+    </div>
+    <div>
+        <h1>Audio</h1>
+        <p>This is some placeholder text that will talk about how sans can play and queue audio for you and your friends.</p>
+    </div>
+</div>
+<div class="contact-container">
+    <h1>Contribute</h1>
+    <p>Sans car is open source on GitHub. If you have any issues, feel free to submit a pull request.</p>
+</div>
+</body>
+<footer>
+    <!-- TODO: Make this from a model. (no hardcoding) -->
+    <h1>Contact</h1>
+    <ul>
+        <li>Email: <a>tristannzander@gmail.com</a></li>
+        <li>Github: <a>@Model.Github</a></li>
+        <li>Discord: Galestrike#8814</li>
+    </ul>
+</footer>
+</html>

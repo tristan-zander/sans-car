@@ -1,10 +1,12 @@
 using Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 
 namespace SansCar
@@ -22,6 +24,7 @@ namespace SansCar
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllersWithViews();
+            services.AddRazorPages();
 
             services.AddDbContext<SansDbContext>(options =>
             {
@@ -30,6 +33,8 @@ namespace SansCar
             
             // In production, the React files will be served from this directory
             services.AddSpaStaticFiles(configuration => { configuration.RootPath = "ClientApp/build"; });
+
+            services.AddHealthChecks();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -51,23 +56,35 @@ namespace SansCar
             app.UseSpaStaticFiles();
 
             app.UseRouting();
-            
+
             app.UseEndpoints(endpoints =>
             {
+                var reactApp = endpoints.CreateApplicationBuilder();
+                reactApp.UseSpa(spa =>
+                {
+                    spa.Options.SourcePath = "ClientApp";
+
+                    if (env.IsDevelopment())
+                    {
+                        spa.UseReactDevelopmentServer(npmScript: "start");
+                    }
+                });
+                endpoints.MapGet("/app/{**extra}", reactApp.Build());
+
+                // endpoints.MapGet("/", async context =>
+                // {
+                //     await context.Response.WriteAsync("Serve the main page.");
+                // });
+
+                endpoints.MapRazorPages();
+
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller}/{action=Index}/{id?}");
+
+                endpoints.MapHealthChecks("/healthz");
             });
 
-            app.UseSpa(spa =>
-            {
-                spa.Options.SourcePath = "ClientApp";
-
-                if (env.IsDevelopment())
-                {
-                    spa.UseReactDevelopmentServer(npmScript: "start");
-                }
-            });
         }
     }
 }

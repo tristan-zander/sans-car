@@ -20,7 +20,7 @@ function ContactField(props) {
             <h2>{props.link && <a href={props.link}>{props.title}</a> || props.title}</h2>
             <p>{props.children}</p>
         </div>
-    );
+    )
 }
 
 export default ContactCard;

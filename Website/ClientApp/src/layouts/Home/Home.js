@@ -10,7 +10,6 @@ export function Home(props) {
     return (
         <div className="home-container">
             {props.children}
-            <CommandRotationWidget />
         </div>)
 }
 
@@ -28,7 +27,7 @@ export function MainWindow(props) {
             <div className="main-card">
             <Header image={SansCarImage} />
             <Body>
-            Sans car is a meme bot for Discord. Sans car can manage your quotes, play audio, and
+            Sans car can manage your quotes, play audio, and
             (in the future) manage roles and channels. Just say "sans car" anywhere in a server or "sans help" for a list of
             commands.
             </Body>

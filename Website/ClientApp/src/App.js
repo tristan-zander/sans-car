@@ -4,6 +4,7 @@ import React from 'react'
 
 import {Navbar, NavbarItem} from './components/Navbar/Navbar'
 import {Home, MainWindow } from './layouts/Home/Home';
+import {CommandRotationWidget} from "./components/CommandRotationWidget/CommandRotationWidget";
 
 function App() {
   // GENERAL STRUCTURE
@@ -23,6 +24,8 @@ function App() {
       </Navbar>
     <Home>
       <MainWindow />
+        { // <CommandRotationWidget />
+        }
     </Home>
     <footer>This will be the footer.</footer>
   </div>);
