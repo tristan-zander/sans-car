@@ -1,5 +1,0 @@
-.env
-keys/*
-
-node_modules/
-build/*

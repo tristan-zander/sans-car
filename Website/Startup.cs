@@ -24,8 +24,10 @@ namespace SansCar
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllersWithViews();
-            services.AddRazorPages();
-
+            
+            // TODO: Runtime compilation only in dev mode.
+            services.AddRazorPages().AddRazorRuntimeCompilation();
+            
             services.AddDbContext<SansDbContext>(options =>
             {
                 options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection"));
@@ -53,14 +55,15 @@ namespace SansCar
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
-            app.UseSpaStaticFiles();
+            app.UseDefaultFiles();
+            // app.UseSpaStaticFiles();
 
             app.UseRouting();
 
             app.UseEndpoints(endpoints =>
             {
-                var reactApp = endpoints.CreateApplicationBuilder();
-                reactApp.UseSpa(spa =>
+                // var reactApp = endpoints.CreateApplicationBuilder();
+                /* reactApp.UseSpa(spa =>
                 {
                     spa.Options.SourcePath = "ClientApp";
 
@@ -69,12 +72,9 @@ namespace SansCar
                         spa.UseReactDevelopmentServer(npmScript: "start");
                     }
                 });
-                endpoints.MapGet("/app/{**extra}", reactApp.Build());
-
-                // endpoints.MapGet("/", async context =>
-                // {
-                //     await context.Response.WriteAsync("Serve the main page.");
-                // });
+                */
+                
+                // endpoints.MapGet("/app/{**extra}", reactApp.Build());
 
                 endpoints.MapRazorPages();
 
@@ -82,7 +82,7 @@ namespace SansCar
                     name: "default",
                     pattern: "{controller}/{action=Index}/{id?}");
 
-                endpoints.MapHealthChecks("/healthz");
+                // endpoints.MapHealthChecks("/healthz");
             });
 
         }
