@@ -8,7 +8,8 @@ namespace Data
     {
         [Key]
         public ulong GuildId { get; set; }
-        public bool AllowQuotes = true;
+
+        public bool AllowQuotes { get; set; } = true;
         public List<Quote> Quotes { get; set; } = new List<Quote>();
         public bool AllowAudio = true;
         public AudioPlayer? AudioPlayer { get; set; }

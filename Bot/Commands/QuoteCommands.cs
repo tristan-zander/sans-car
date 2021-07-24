@@ -15,6 +15,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Bot.Commands
 {
+    // TODO: make sure that admins can execute quote commands regardless of whether it's enabled or not.
     [Group("quote"), Aliases("q", "quotes", "quo")]
     [Description("Manage quotes from your server.")]
     public class QuoteCommands : BaseCommandModule
@@ -45,6 +46,7 @@ namespace Bot.Commands
             try
             {
                 await ctx.TriggerTypingAsync();
+                
                 var user = await Context.Users.FindAsync(mention.Id) ?? new User(mention);
                 
                 var guild = await Context.Guilds.FindAsync(ctx.Guild.Id) ?? new Guild
@@ -52,6 +54,12 @@ namespace Bot.Commands
                     GuildId = ctx.Guild.Id,
                     Quotes = new List<Quote>()
                 };
+
+                if (guild.AllowQuotes != true)
+                {
+                    await ctx.RespondAsync("Sorry, quotes aren't enabled in this server.");
+                    return;
+                }
 
                 var quote = new Quote
                 {
@@ -83,6 +91,20 @@ namespace Bot.Commands
             try
             {
                 await ctx.TriggerTypingAsync();
+
+                var guild = await Context.Guilds.FindAsync(ctx.Guild.Id);
+
+                if (guild == null)
+                {
+                    await ctx.RespondAsync("There are no quotes in this server! Use \"sans quote add\" to add a quote.");
+                    return;
+                }
+                    
+                if (guild.AllowQuotes != true)
+                {
+                    await ctx.RespondAsync("Sorry, quotes aren't enabled in this server.");
+                    return;
+                }
                 
                 // var quotes = Context.Quotes.Where(q => q.Guild.GuildId == ctx.Guild.Id).Take(10).ToList();
                 var quotesQuery = (from quote in Context.Quotes
@@ -130,6 +152,31 @@ namespace Bot.Commands
             try
             {
                 await ctx.TriggerTypingAsync();
+
+                if (await CheckQuoteAvailability(ctx) != true)
+                {
+                    return;
+                }
+
+                var guild = await Context.Guilds.FindAsync(ctx.Guild.Id);
+                
+                if (guild == null)
+                {
+                    await ctx.RespondAsync("There are no quotes in this server! Use \"sans quote add\" to add a quote.");
+                    return;
+                }
+                
+                if (guild.AllowQuotes != true)
+                {
+                    await ctx.RespondAsync("Sorry, quotes aren't enabled in this server.");
+                    return;
+                }
+
+                if (search.Length <= 0)
+                {
+                    await ctx.RespondAsync("Usage: \"sans quote remove [quote message]\".");
+                    return;
+                }
 
                 var possibleQuotes = (from quote in Context.Quotes
                     join user in Context.Users on quote.BlamedUser.Id equals user.Id
@@ -193,6 +240,55 @@ namespace Bot.Commands
                 Logger.LogWarning(e, "Could not remove quote.");
                 await ctx.RespondAsync("Could not find a quote that matched.");
             }
+        }
+
+        
+        [Command("toggle"), RequireOwner]
+        [Description("Toggle whether or not your server can use quotes. Existing quotes will not be deleted and you can still run quote commands as admin.")]
+        public async Task ToggleQuoteEnabled(CommandContext ctx, bool setEnable)
+        {
+            var guild = await Context.Guilds.FindAsync(ctx.Guild.Id) ?? new Guild
+            {
+                GuildId = ctx.Guild.Id,
+                AllowQuotes = setEnable,
+            };
+            guild.AllowQuotes = setEnable;
+            var updated = Context.Guilds.Update(guild);
+            await Context.SaveChangesAsync();
+
+            await ctx.RespondAsync("Setting quote status to " + setEnable);
+        }
+
+        [Command("toggle"), RequireOwner]
+        public async Task ToggleQuoteEnabled(CommandContext ctx)
+        {
+            var guild = await Context.Guilds.FindAsync(ctx.Guild.Id);
+            await ctx.RespondAsync($"Current guild status: {guild?.AllowQuotes}.\nUsage: \"sans quote toggle [true|false]\"");
+        }
+
+        /// <summary>
+        /// Checks whether or not the server/user can execute quote commands. Note: This function also handles replying
+        /// to the user (so don't do it twice).
+        /// </summary>
+        /// <param name="ctx">The parent command's command context</param>
+        /// <returns></returns>
+        private async ValueTask<bool> CheckQuoteAvailability(CommandContext ctx)
+        {
+            var dbGuild = await Context.Guilds.FindAsync(ctx.Guild.Id);
+
+            if (dbGuild == null)
+            {
+                await ctx.RespondAsync("There are no quotes in this server! Use \"sans quote add\" to add a quote.");
+                return false;
+            }
+
+            if (dbGuild.AllowQuotes != true)
+            {
+                await ctx.RespondAsync("Sorry, quotes aren't enabled in this server.");
+                return false;
+            }
+
+            return true;
         }
     }
 }

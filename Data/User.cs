@@ -11,7 +11,7 @@ namespace Data
         /// <summary>
         /// Analogous to the Discord user's ID snowflake.
         /// </summary>
-        [Key] public ulong Id { get; set; }
+        [Key] public ulong Id { get; init; }
 
         public User(DiscordUser user)
         {

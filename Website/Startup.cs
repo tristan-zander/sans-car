@@ -30,7 +30,7 @@ namespace SansCar
             
             services.AddDbContext<SansDbContext>(options =>
             {
-                options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection"));
+                options.UseNpgsql();
             });
             
             // In production, the React files will be served from this directory
