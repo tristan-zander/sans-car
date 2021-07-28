@@ -1,0 +1,7 @@
+obj/
+bin/
+
+# Suppress Lavalank files
+Lavalink.jar
+logs/
+application.yml

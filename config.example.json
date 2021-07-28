@@ -1,0 +1,17 @@
+{
+  "Bot": {
+    "Token": "",
+    "Prefixes": ["sans", "s?"]
+  },
+  "Lavalink": {
+    "Port": 2333,
+    "Password": "youshallnotpass",
+    "Address": "127.0.0.1"
+  },
+  "Website": {
+    "StaticFiles": "ClientApp/build"
+  },
+  "Database": {
+    "ConnectionString": "Server=localhost;Username=;Database=sans_car;Password=;Port=5432"
+  }
+}

@@ -1,0 +1,146 @@
+@page
+@model SansCar.Pages.Index
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <link href="~/css/main.css" rel="stylesheet" type="text/css"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Source+Code+Pro:wght@500&display=swap" rel="stylesheet">
+    <title>Sans Car Home Page</title>
+</head>
+
+<body class="container">
+<header class="container">
+    <ul class="navbar">
+        <a class="nav-item" href="#home">Home</a>
+        <a class="nav-item" href="https://sanscar.net/add-bot">Add Bot</a>
+        <!-- li class="nav-item">Coming soon: Dashboard</li -->
+    </ul>
+</header>
+<div id="home" class="top-padding"></div>
+<div class="main-container">
+    <div class="container main-info">
+        <div class="container image-and-title">
+            <img src="~/images/sanscar.jpg" class="sans-image-container" alt="The original sans car meme."/>
+            <div class="container title-container">
+                <h1 class="title">Sans Car</h1>
+                <h2>A meme bot for Discord.</h2>
+            </div>
+        </div>
+        <p class="sans-description">
+            Sans car can manage your quotes, play audio, and
+            (in the future) manage roles and channels. Just say "sans car" anywhere in a server or "sans help" for a
+            list of commands.
+            <br/>
+            <br/>
+            Sans car is entirely open source and managed by one person,
+            so be patient with updates and new features. Any support is welcome.
+        </p>
+        <div class="call-to-action">
+            <!-- TODO: Make this from a model. (no hardcoding) -->
+            <a href="https://sanscar.net/add-bot">
+                Add sans car to your server
+            </a>
+        </div>
+    </div>
+    <div class="container secondary-container">
+        <div class="container dashboard-card">
+            <h1>Coming Soon: Dashboard</h1>
+            <p>
+                Manage everything about your server, all in one place. The dashboard is currently
+                in development.
+            </p>
+        </div>
+    </div>
+    <div class="container tertiary-container">
+        <!-- TODO: enable once the dashboard has been created. -->
+        <button disabled class="dashboard-button">View the dashboard.</button>
+    </div>
+</div>
+<div class="features-container">
+    <h1 class="features-header">Features</h1>
+    <div class="features-list">
+        <!-- TODO: Every feature should be added to the DOM at compile time through C#'s attribute system and cshtml templating-->
+        <div>
+            <div class="feature">
+                <h1>Quotes</h1>
+                <p>
+                    Save all of your server's funny messages. Use "sans quote" with a message to have it live on
+                    forever.
+                    Quotes can all be pushed into a specific channel or called upon randomly with "sans
+                    random-quote".
+                </p>
+            </div>
+        </div>
+        <div>
+            <div class="feature">
+                <h1>Audio</h1>
+                <p>
+                    Sans car is an all-in-one solution for audio playback in servers. Use "sans play" with a video
+                    link or name and sans will immediately play it for you.
+                </p>
+            </div>
+        </div>
+        <div>
+            <div class="feature">
+                <h1>Soon: Matchmaking</h1>
+                <p>
+                    Spend less time looking for games and spend more time playing. Sans matchmaking will be a
+                    solution for all of your gaming needs.
+                    Matchmaking will even work across servers (if you like!) and will have a nice app and webapp for
+                    ease of use.
+                </p>
+            </div>
+        </div>
+        <div>
+            <div class="feature">
+                <h1>Not enough?</h1>
+                <p>
+                    Need another feature for your server? Open an issue on our
+                    <a href="https://github.com/tristan-zander/SansCar">GitHub</a> or
+                    <a href="#contact">
+                        send me a
+                        message
+                    </a>
+                    if you're not satisfied with what Sans Car offers by default.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="contribute-container">
+    <h1>Contribute</h1>
+    <p>
+        Sans car is open source on <a href="https://github.com/tristan-zander/SansCar">GitHub</a>. If you have any
+        issues, feel free to submit a pull request.
+    </p>
+    <!-- Github embed card. -->
+    <noscript>
+        <a>View the repository in GitHub.</a>
+    </noscript>
+    <!-- TODO: use JavaScript to embed the repo and it's most recent changes. -->
+    <div id="github-embed"></div>
+</div>
+</body>
+<footer>
+    <h1 id="contact">Contact</h1>
+    <ul>
+        <li>
+            <a href="mailto:tristannzander@gmail.com">Send me an email.</a>
+        </li>
+        <!-- TODO: make this all an embedded card with JavaScript -->
+        <li>
+            <a href="https://github.com/tristan-zander">Check out my GitHub Profile.</a>
+        </li>
+        <li>Message me on Discord: Galestrike#8814</li>
+    </ul>
+</footer>
+
+</html>
