@@ -2,25 +2,26 @@ version: "3.3"
 services:
   lavalink:
     build: 
-      context: .
-      dockerfile: "lavalink.Dockerfile"
+      context: ..
+      dockerfile: "docker/Lavalink.Dockerfile"
     image: "fredboat/lavalink:master"
     ports: 
       - "2333:2333"
       - "8080:8080"
   web:
     build: 
-      context: "../Website/"
+      context: ".."
+      dockerfile: "docker/Website.Dockerfile"
+    container_name: sanscar-web
     ports:
       - "80:80"
       - "443:443"
-    depends_on: 
-      - data 
+    volumes:
+      - ".:/src"
   bot:
     build: 
-      context: "../Bot/"
-    depends_on:
-      - data
-  data:
-    build:
-      context: "../Data"
+      context: ".."
+      dockerfile: "docker/Bot.Dockerfile"
+    container_name: sanscar-bot
+    volumes:
+      - ".:/src"

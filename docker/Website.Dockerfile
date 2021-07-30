@@ -2,19 +2,19 @@
 WORKDIR /app
 
 FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
+# RUN apt-get update && apt-get install nodejs npm -y
 WORKDIR /src
-COPY ["Bot.csproj", "Bot/"]
-RUN dotnet restore "Bot/Bot.csproj"
 COPY . .
-WORKDIR "/src/Bot"
-RUN dotnet build "Bot.csproj" -c Release -o /app/build
+RUN dotnet restore "Website/Website.csproj"
+WORKDIR "/src/Website"
+RUN dotnet build "Website.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "Bot.csproj" -c Release -o /app/publish
+RUN dotnet publish "Website.csproj" -c Release -o /app/publish
 
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "Bot.dll"]
+ENTRYPOINT ["dotnet", "Website.dll"]
 
 MAINTAINER Tristan Zander <tristannzander@gmail.com>
