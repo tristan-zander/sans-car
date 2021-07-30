@@ -5,15 +5,16 @@ riderModule.iml
 /_ReSharper.Caches/
 
 **/.env
-.env
 *.env
 
-config.json
 **/config.json
 
 *.DotSettings.user
 
-lavalink.yml
-lavalink.*.yml
+# Lavalink jar, configs, and logs
 **/lavalink.yml
 **/lavalink.*.yml
+**/application.yml
+**/application.*.yml
+**/Lavalink.jar
+**/logs

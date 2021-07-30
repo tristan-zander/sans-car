@@ -8,11 +8,11 @@ set -e
 # overwrite that file. 
 
 function get_lavalink_conf() { 
-	curl -o ./lavalink.yml https://raw.githubusercontent.com/freyacodes/Lavalink/master/LavalinkServer/application.yml.example
-	$EDITOR ./lavalink.yml
+	curl -o ./application.yml https://raw.githubusercontent.com/freyacodes/Lavalink/master/LavalinkServer/application.yml.example
+	$EDITOR ./application.yml
 }
 
-LAVALINK_CONFIG=${LAVALINK_CONFIG:="lavalink.yml"}
+LAVALINK_CONFIG=${LAVALINK_CONFIG:="application.yml"}
 
 # Check based on environment variable.
 if [[ "${LAVALINK_CONFIG:${#LAVALINK_CONFIG}-4}" == ".yml" ]] && [[ -f "$LAVALINK_CONFIG" ]]; then

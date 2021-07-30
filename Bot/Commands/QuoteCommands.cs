@@ -242,28 +242,36 @@ namespace Bot.Commands
             }
         }
 
-        
-        [Command("toggle"), RequireOwner]
-        [Description("Toggle whether or not your server can use quotes. Existing quotes will not be deleted and you can still run quote commands as admin.")]
-        public async Task ToggleQuoteEnabled(CommandContext ctx, bool setEnable)
+        [Command("disable"), RequireOwner]
+        [Description("Disables whether regular users can use the quotes feature.")]
+        public async Task DisableQuotes(CommandContext ctx)
         {
             var guild = await Context.Guilds.FindAsync(ctx.Guild.Id) ?? new Guild
             {
                 GuildId = ctx.Guild.Id,
-                AllowQuotes = setEnable,
+                AllowQuotes = false,
             };
-            guild.AllowQuotes = setEnable;
+            guild.AllowQuotes = false;
             var updated = Context.Guilds.Update(guild);
             await Context.SaveChangesAsync();
 
-            await ctx.RespondAsync("Setting quote status to " + setEnable);
+            await ctx.RespondAsync("Disabling quotes (existing quotes will not be deleted).");
         }
-
-        [Command("toggle"), RequireOwner]
-        public async Task ToggleQuoteEnabled(CommandContext ctx)
+        
+        [Command("enable"), RequireOwner]
+        [Description("Enables the quotes feature for regular users.")]
+        public async Task EnableQuotes(CommandContext ctx)
         {
-            var guild = await Context.Guilds.FindAsync(ctx.Guild.Id);
-            await ctx.RespondAsync($"Current guild status: {guild?.AllowQuotes}.\nUsage: \"sans quote toggle [true|false]\"");
+            var guild = await Context.Guilds.FindAsync(ctx.Guild.Id) ?? new Guild
+            {
+                GuildId = ctx.Guild.Id,
+                AllowQuotes = true,
+            };
+            guild.AllowQuotes = true;
+            var updated = Context.Guilds.Update(guild);
+            await Context.SaveChangesAsync();
+
+            await ctx.RespondAsync("Enabling quotes feature.");
         }
 
         /// <summary>
