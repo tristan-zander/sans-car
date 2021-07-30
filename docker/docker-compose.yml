@@ -14,6 +14,13 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    depends_on: 
+      - data 
   bot:
     build: 
       context: "../Bot/"
+    depends_on:
+      - data
+  data:
+    build:
+      context: "../Data"
