@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -59,7 +60,7 @@ namespace SansCar
             // app.UseSpaStaticFiles();
 
             app.UseRouting();
-
+            
             app.UseEndpoints(endpoints =>
             {
                 // var reactApp = endpoints.CreateApplicationBuilder();
@@ -77,14 +78,13 @@ namespace SansCar
                 // endpoints.MapGet("/app/{**extra}", reactApp.Build());
 
                 endpoints.MapRazorPages();
-
+               
                 endpoints.MapControllerRoute(
                     name: "default",
-                    pattern: "{controller}/{action=Index}/{id?}");
+                    pattern: "{controller}/{action=Index}");
 
-                // endpoints.MapHealthChecks("/healthz");
+                endpoints.MapFallbackToPage("/Error");
             });
-
         }
     }
 }
