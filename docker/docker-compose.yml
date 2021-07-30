@@ -1,0 +1,19 @@
+version: "3.3"
+services:
+  lavalink:
+    build: 
+      context: .
+      dockerfile: "lavalink.Dockerfile"
+    image: "fredboat/lavalink:master"
+    ports: 
+      - "2333:2333"
+      - "8080:8080"
+  web:
+    build: 
+      context: "../Website/"
+    ports:
+      - "80:80"
+      - "443:443"
+  bot:
+    build: 
+      context: "../Bot/"
