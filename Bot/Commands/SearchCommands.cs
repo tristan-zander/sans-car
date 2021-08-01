@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Data;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
@@ -30,6 +31,7 @@ namespace Bot.Commands
     public class SearchCommands : BaseCommandModule
     {
         public ILogger<BaseDiscordClient> Logger { private get; set; }
+        public SansDbContext Context { private get; set; }
 
         private Dictionary<string, ISearchCommand> _commands = new Dictionary<string, ISearchCommand>();
 
@@ -37,6 +39,7 @@ namespace Bot.Commands
         {
             Logger = logger;
 
+            // TODO: use reflection or source generation to get all the search commands based on the assembly.
             AddCommand<SansCarSearchCommand>(_commands);
             AddCommand<KyloRenSearchCommand>(_commands);
         }
@@ -59,12 +62,19 @@ namespace Bot.Commands
            
            if (args.Author.IsBot) return;
 
+           var guild = await Context.Guilds.FindAsync(args.Guild.Id) ?? new Guild
+           {
+               GuildId = args.Guild.Id
+           };
+           if (!guild.AllowSearchCommands) return;
+
            foreach (var commName in _commands.Keys.Where(commName => args.Message.Content.ToUpper().Contains(commName)))
            {
                try
                {
                    await _commands[commName].Execute(sender, args);
                }
+               // TODO: Send this to the database for auditing. I think DSharpPlus has a way of dealing with exceptions across all events.
                catch (Exception e)
                {
                    Logger.LogError(e, $"Failed to execute command {commName}.");
