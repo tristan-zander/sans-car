@@ -48,12 +48,23 @@ namespace Bot.Commands
                 await ctx.TriggerTypingAsync();
                 
                 var user = await Context.Users.FindAsync(mention.Id) ?? new User(mention);
+
+                var guildAndChannel = (from g in Context.Guilds
+                        join c in Context.Channels on g.QuoteChannel.Id equals c.Id
+                        select new {g = g, c = c}).First();
+                var guild = guildAndChannel.g;
+                guild.QuoteChannel = guildAndChannel.c;
                 
-                var guild = await Context.Guilds.FindAsync(ctx.Guild.Id) ?? new Guild
+                /*
+                if (guild == null)
                 {
-                    GuildId = ctx.Guild.Id,
-                    Quotes = new List<Quote>()
-                };
+                    guild = new Guild
+                    {
+                        GuildId = ctx.Guild.Id,
+                        Quotes = new List<Quote>(),
+                    };
+                }
+                */
 
                 if (guild.AllowQuotes != true)
                 {
@@ -68,17 +79,28 @@ namespace Bot.Commands
                     TimeAdded = DateTimeOffset.UtcNow,
                     BlamedUser = user
                 };
-
+                
                 var entity = await Context.Quotes.AddAsync(quote);
                 await Context.SaveChangesAsync();
                 
-                // TODO assert that the quote was successfully created.
+                if (guild.EnableQuoteChannel && guild.QuoteChannel != null)
+                {
+                    var blamedUser = await ctx.Client.GetUserAsync(quote.BlamedUser.Id);
+                    var embed = new DiscordEmbedBuilder()
+                        .WithColor(DiscordColor.Blue)
+                        .WithUrl("https://sanscar.net")
+                        .AddField($"{blamedUser.Username}#{blamedUser.Discriminator}", $"{quote.Message}")
+                        .WithTimestamp(quote.TimeAdded)
+                        .Build();
+                    var channel = await ctx.Client.GetChannelAsync(guild.QuoteChannel.Id);
+                    await channel.SendMessageAsync(embed);
+                }
 
                 await ctx.RespondAsync($"Successfully added quote: ```{entity.Entity.Message.Replace("`", "")}```");
             }
             catch (Exception e)
             {
-                Logger.LogError(e, "Failed to add quote to the database.");
+                Logger.LogError(e, "Failed to add quote to the database");
 
                 await ctx.RespondAsync("There was an error adding your quote.");
             }
@@ -279,7 +301,7 @@ namespace Bot.Commands
         /// to the user (so don't do it twice).
         /// </summary>
         /// <param name="ctx">The parent command's command context</param>
-        /// <returns></returns>
+        /// <returns>Whether or not the guild is allowed to use quotes or already has quotes.</returns>
         private async ValueTask<bool> CheckQuoteAvailability(CommandContext ctx)
         {
             var dbGuild = await Context.Guilds.FindAsync(ctx.Guild.Id);

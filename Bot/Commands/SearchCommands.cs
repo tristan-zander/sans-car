@@ -35,9 +35,10 @@ namespace Bot.Commands
 
         private Dictionary<string, ISearchCommand> _commands = new Dictionary<string, ISearchCommand>();
 
-        public SearchCommands(ILogger<BaseDiscordClient> logger)
+        public SearchCommands(ILogger<BaseDiscordClient> logger, SansDbContext db)
         {
             Logger = logger;
+            Context = db;
 
             // TODO: use reflection or source generation to get all the search commands based on the assembly.
             AddCommand<SansCarSearchCommand>(_commands);
@@ -57,16 +58,10 @@ namespace Bot.Commands
         
         public async Task SearchCommandsEvent(DiscordClient sender, MessageCreateEventArgs args)
         {
-            // TODO: This function will string search the message for a search command like 'sans car' or 
-           // 'bring me the girl'
-           
            if (args.Author.IsBot) return;
 
-           var guild = await Context.Guilds.FindAsync(args.Guild.Id) ?? new Guild
-           {
-               GuildId = args.Guild.Id
-           };
-           if (!guild.AllowSearchCommands) return;
+           var guild = (await Context.Guilds.FindAsync(args.Guild.Id))?.AllowSearchCommands ?? true;
+           if (!guild) return;
 
            foreach (var commName in _commands.Keys.Where(commName => args.Message.Content.ToUpper().Contains(commName)))
            {

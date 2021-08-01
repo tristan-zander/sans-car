@@ -90,7 +90,7 @@ namespace Bot
                 commands[shard]?.RegisterConverter(new ParseArgsConvertor<MessageArg>());
             }
 
-            var searchCommands = new SearchCommands(bot.Logger);
+            var searchCommands = new SearchCommands(bot.Logger, dbContext);
             bot.MessageCreated += searchCommands.SearchCommandsEvent;
 
             #endregion InitialBotConfig

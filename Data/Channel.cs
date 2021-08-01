@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using DSharpPlus;
 using DSharpPlus.Entities;
 
 namespace Data

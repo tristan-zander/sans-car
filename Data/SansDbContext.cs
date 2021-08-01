@@ -7,6 +7,7 @@ namespace Data
         private string ConnectionString { get; }
         
         public DbSet<Guild> Guilds { get; set; }
+        public DbSet<Channel> Channels { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Quote> Quotes { get; set; }
         

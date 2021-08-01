@@ -3,6 +3,8 @@
 /packages/
 riderModule.iml
 /_ReSharper.Caches/
+.idea/
+.vscode/
 
 **/.env
 *.env
