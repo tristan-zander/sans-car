@@ -32,4 +32,28 @@
       <ProjectReference Include="..\Data\Data.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Content Include="..\application.yml">
+        <Link>application.yml</Link>
+      </Content>
+      <Content Include="..\config.example.json">
+        <Link>config.example.json</Link>
+      </Content>
+      <Content Include="..\config.json">
+        <Link>config.json</Link>
+      </Content>
+      <Content Include="..\docker\Bot.Dockerfile">
+        <Link>docker\Bot.Dockerfile</Link>
+      </Content>
+      <Content Include="..\docker\docker-compose.yml">
+        <Link>docker\docker-compose.yml</Link>
+      </Content>
+      <Content Include="..\docker\Lavalink.Dockerfile">
+        <Link>docker\Lavalink.Dockerfile</Link>
+      </Content>
+      <Content Include="..\docker\Website.Dockerfile">
+        <Link>docker\Website.Dockerfile</Link>
+      </Content>
+    </ItemGroup>
+
 </Project>

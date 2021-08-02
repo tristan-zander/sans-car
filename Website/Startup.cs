@@ -27,17 +27,17 @@ namespace SansCar
             services.AddControllersWithViews();
             
             // TODO: Runtime compilation only in dev mode.
-            services.AddRazorPages().AddRazorRuntimeCompilation();
+            // services.AddRazorPages().AddRazorRuntimeCompilation();
+            services.AddRazorPages();
             
             services.AddDbContext<SansDbContext>(options =>
             {
                 options.UseNpgsql();
             });
             
-            // In production, the React files will be served from this directory
-            services.AddSpaStaticFiles(configuration => { configuration.RootPath = "ClientApp/build"; });
+            // services.AddSpaStaticFiles(configuration => { configuration.RootPath = "ClientApp/build"; });
 
-            services.AddHealthChecks();
+            // services.AddHealthChecks();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
