@@ -83,7 +83,12 @@ namespace SansCar
                     name: "default",
                     pattern: "{controller}/{action=Index}");
 
-                endpoints.MapFallbackToPage("/Error");
+                endpoints.MapFallback(context =>
+                {
+                    context.Response.StatusCode = StatusCodes.Status404NotFound;
+                    context.Response.Redirect("/");
+                    return Task.CompletedTask;
+                });
             });
         }
     }
