@@ -10,12 +10,14 @@ using Bot.Intermediary_Message_Types;
 using Data;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
+using DSharpPlus.CommandsNext.Exceptions;
 using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Enums;
 using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.Lavalink;
 using DSharpPlus.Net;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using LavalinkConfiguration = DSharpPlus.Lavalink.LavalinkConfiguration;
 
 namespace Bot
@@ -74,7 +76,7 @@ namespace Bot
 
             var services = new ServiceCollection()
                 .AddSingleton(bot.Logger)
-                .AddSingleton(dbContext)
+                .AddDbContext<SansDbContext>()
                 .BuildServiceProvider();
 
             var commands = await bot.UseCommandsNextAsync(
@@ -88,9 +90,29 @@ namespace Bot
             {
                 commands[shard]?.RegisterCommands(Assembly.GetExecutingAssembly());
                 commands[shard]?.RegisterConverter(new ParseArgsConvertor<MessageArg>());
+
+                #region OnCommandError
+
+                commands[shard].CommandErrored += async (ev, arg) =>
+                {
+                    bot.Logger.LogError(arg.Exception, "CommandsNext command failed");
+
+                    if (arg.Exception is CommandNotFoundException or ArgumentException)
+                    {
+                        return;
+                    }
+                    
+                    // TODO: Send the exception to the database.
+                    
+                    await arg.Context.RespondAsync("The bot ran into an error while trying to execute your command. " +
+                                                   "Please try again or contact the developer.");
+                };
+
+                #endregion
+
             }
 
-            var searchCommands = new SearchCommands(bot.Logger, dbContext);
+            var searchCommands = new SearchCommands(bot.Logger, new SansDbContext(projectConfig.Database.ConnectionString));
             bot.MessageCreated += searchCommands.SearchCommandsEvent;
 
             #endregion InitialBotConfig

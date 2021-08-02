@@ -9,8 +9,8 @@ using Microsoft.Extensions.Logging;
 namespace Bot.Commands
 {
     // TODO: Require owner
-    [Group("admin")]
-    [Description("Commands that can only be executed by a server's admin staff.")]
+    [Group("admin"), RequireOwner]
+    [Description("Commands that can only be executed by a server's admin staff or owner.")]
     public class AdminCommands : BaseCommandModule
     {
         private SansDbContext Context { get; }
@@ -20,6 +20,15 @@ namespace Bot.Commands
         {
             Context = db;
             Logger = log;
+        }
+
+        [Command]
+        [Description("Shortcut to saying \"sans help admin\"")]
+        public async Task Help(CommandContext ctx)
+        {
+            var _rawArg = "admin";
+            var context = ctx.CommandsNext.CreateContext(ctx.Message, ctx.Prefix, ctx.CommandsNext.FindCommand("help", out _rawArg), "admin " + ctx.RawArgumentString);
+            await ctx.CommandsNext.ExecuteCommandAsync(context);
         }
         
         [Command("toggle-search-commands"), Aliases("stoggle", "toggle-search")]
@@ -56,6 +65,8 @@ namespace Bot.Commands
 
         // This command explicitly must be executed by the owner so bad admins can't wipe server data.
         [Command("delete-quotes"),Aliases("qdelete"), RequireOwner]
+        [Description("(Unimplemented) Delete all quotes for your server. Quotes will remain in the database for a " +
+                     "certain period of time before being deleted but will be unable to be accessed.")]
         public async Task DeleteQuotes(CommandContext ctx)
         {
             var guild = await Context.Guilds.FindAsync(ctx.Guild.Id);
@@ -70,7 +81,7 @@ namespace Bot.Commands
         }
 
         [Command("set-quote-channel"), Aliases("qcset")]
-        [Description("Set the channel to which quotes will be posted when added.")]
+        [Description("Set the channel to which quotes will be posted whenever someone adds one.")]
         public async Task SetQuoteChannel(CommandContext ctx, DiscordChannel chan)
         {
             var channel = await Context.Channels.FindAsync(chan.Id);

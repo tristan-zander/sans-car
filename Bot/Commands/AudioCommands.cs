@@ -21,7 +21,6 @@ namespace Bot.Commands
 
     }
 
-    // TODO: Log whenever a command fails.
     public class AudioCommands : BaseCommandModule
     {
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
@@ -31,6 +30,7 @@ namespace Bot.Commands
         // public GuildAudioPlayer Player { private get; set; }
 
         [Command, Aliases("j")]
+        [Description("Joins the voice channel that you are currently in.")]
         public async Task Join(CommandContext ctx, DiscordChannel channel)
         {
             var lava = ctx.Client.GetLavalink();
@@ -66,6 +66,7 @@ namespace Bot.Commands
         }
 
         [Command("leave"), Aliases("dc")]
+        [Description("Leaves the voice channel and stops the audio playback session.")]
         public async Task Leave(CommandContext ctx, DiscordChannel channel)
         {
             var lava = ctx.Client.GetLavalink();
@@ -107,6 +108,8 @@ namespace Bot.Commands
         }
 
         [Command("play"), Aliases("p")]
+        [Description("Plays a song from a link. Only YouTube links are currently known to be supported.\n" +
+                     "Searching by title will be added in the near future.")]
         public async Task Play(CommandContext ctx, [RemainingText] string search)
         {
             if (ctx.Member.VoiceState == null || ctx.Member.VoiceState.Channel == null)
@@ -144,6 +147,7 @@ namespace Bot.Commands
         }
         
         [Command("pause"), Aliases("stop")]
+        [Description("Pauses audio playback.")]
         public async Task Pause(CommandContext ctx)
         {
             if (ctx.Member.VoiceState == null || ctx.Member.VoiceState.Channel == null)

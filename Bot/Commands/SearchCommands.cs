@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Serialization.Json;
 using System.Threading.Tasks;
 using Data;
 using DSharpPlus;
@@ -30,8 +31,8 @@ namespace Bot.Commands
     // Remove this thing eventually. It's just a meme thing after all.
     public class SearchCommands : BaseCommandModule
     {
-        public ILogger<BaseDiscordClient> Logger { private get; set; }
-        public SansDbContext Context { private get; set; }
+        public ILogger<BaseDiscordClient> Logger { private get; init; }
+        public SansDbContext Context { private get; init; }
 
         private Dictionary<string, ISearchCommand> _commands = new Dictionary<string, ISearchCommand>();
 
@@ -60,6 +61,7 @@ namespace Bot.Commands
         {
            if (args.Author.IsBot) return;
 
+           // I think this causes a data race. I'm not sure why or how to fix it.
            var guild = (await Context.Guilds.FindAsync(args.Guild.Id))?.AllowSearchCommands ?? true;
            if (!guild) return;
 
@@ -73,7 +75,7 @@ namespace Bot.Commands
                catch (Exception e)
                {
                    Logger.LogError(e, $"Failed to execute command {commName}.");
-                   await args.Message.RespondAsync("I was supposed to send you a message, but I failed somewhere. Please contact Galestrike#8814 and tell him to check the logs.");
+                   await args.Message.RespondAsync("I was supposed to send you a message, but I failed somewhere. Please try again or contact the developer.");
                }
            }
         }

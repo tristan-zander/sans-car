@@ -17,11 +17,5 @@ namespace Bot.Commands
         {
             await ctx.RespondAsync($"Ping time: {ctx.Client.Ping}ms");
         }
-
-        [Command]
-        public async Task Test(CommandContext ctx, [RemainingText] MessageArg message)
-        {
-            await ctx.RespondAsync($"Test succeeded: {message.Content}");
-        }
     }
 }
