@@ -107,7 +107,7 @@ namespace Bot
 
             }
 
-            var searchCommands = new SearchCommands(bot.Logger, new SansDbContext(projectConfig.Database.ConnectionString));
+            var searchCommands = new SearchCommands(bot.Logger, dbContext);
             bot.MessageCreated += searchCommands.SearchCommandsEvent;
 
             #endregion InitialBotConfig
