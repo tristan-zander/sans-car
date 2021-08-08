@@ -118,14 +118,14 @@ namespace Bot
 
             var endpoint = new ConnectionEndpoint
             {
-                Hostname = "127.0.0.1", // From your server configuration.
-                Port = 2333 // From your server configuration
+                Hostname = projectConfig.Lavalink.Address, // From your server configuration.
+                Port = projectConfig.Lavalink.Port // From your server configuration
             };
 
             var lavalinkConfig = new LavalinkConfiguration
             {
                 // TODO: Get password from config
-                Password = "youshallnotpass", // From your server configuration.
+                Password = projectConfig.Lavalink.Password, // From your server configuration.
                 RestEndpoint = endpoint,
                 SocketEndpoint = endpoint
             };
