@@ -16,7 +16,6 @@ namespace SansCar.Controllers
         [HttpGet("/userauth/discord-cb")]
         public IActionResult DiscordOAuthCallback(string data)
         {
-            Console.WriteLine($"Successfully authorized user {data}");
             return Ok("Successfully authorized your account.");
         }
     }
