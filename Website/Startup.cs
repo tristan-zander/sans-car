@@ -55,10 +55,13 @@ namespace SansCar
                 app.UseHsts();
             }
 
+            // For nginx
+            /*
             app.UseForwardedHeaders(new ForwardedHeadersOptions
             {
                 ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
             });
+            */
             
             app.UseHttpsRedirection();
             app.UseStaticFiles();
