@@ -10,6 +10,7 @@ using DSharpPlus.Entities;
 using DSharpPlus.Interactivity.Enums;
 using DSharpPlus.Interactivity.Extensions;
 using FuzzySharp;
+using Microsoft.EntityFrameworkCore.Scaffolding;
 using Microsoft.Extensions.Logging;
 
 namespace Bot.Commands
@@ -49,22 +50,25 @@ namespace Bot.Commands
                 
                 var user = await Context.Users.FindAsync(mention.Id) ?? new User(mention);
 
-                var guildAndChannel = (from g in Context.Guilds
-                        join c in Context.Channels on g.QuoteChannel.Id equals c.Id
-                        select new {g = g, c = c}).First();
-                var guild = guildAndChannel.g;
-                guild.QuoteChannel = guildAndChannel.c;
+                var guildQuery = from g in Context.Guilds
+                    where g.GuildId == ctx.Guild.Id
+                    select g;
+
+                Guild guild;
                 
-                /*
-                if (guild == null)
+                if (!guildQuery.Any())
                 {
+                    // There is not a guild registered.
                     guild = new Guild
                     {
-                        GuildId = ctx.Guild.Id,
-                        Quotes = new List<Quote>(),
+                        GuildId = ctx.Guild.Id
                     };
                 }
-                */
+                else
+                {
+                    guild = guildQuery.First();
+                }
+
 
                 if (guild.AllowQuotes != true)
                 {

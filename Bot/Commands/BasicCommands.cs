@@ -1,6 +1,4 @@
 using System.Threading.Tasks;
-using Bot.Convertors;
-using Bot.Intermediary_Message_Types;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;

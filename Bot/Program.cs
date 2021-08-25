@@ -5,8 +5,6 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Bot.Commands;
-using Bot.Convertors;
-using Bot.Intermediary_Message_Types;
 using Data;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
@@ -89,7 +87,6 @@ namespace Bot
             foreach (var shard in bot.ShardClients.Keys)
             {
                 commands[shard]?.RegisterCommands(Assembly.GetExecutingAssembly());
-                commands[shard]?.RegisterConverter(new ParseArgsConvertor<MessageArg>());
 
                 #region OnCommandError
 
