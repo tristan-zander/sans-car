@@ -57,6 +57,15 @@ namespace Bot.Commands
                 .Include(g => g.QuoteChannel)
                 .SingleOrDefaultAsync(g => g.GuildId == ctx.Guild.Id);
 
+            if (guild == null)
+            {
+                guild = new Guild
+                {
+                    GuildId = ctx.Guild.Id
+                };
+                await Context.AddAsync(guild);
+            }
+
             if (guild.AllowQuotes != true)
             {
                 await ctx.RespondAsync("Sorry, quotes aren't enabled in this server.");
