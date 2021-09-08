@@ -61,26 +61,20 @@ namespace Bot.Commands
         {
            if (args.Author.IsBot) return;
 
-           var commands = _commands.Keys.Where(commName => args.Message.Content.ToUpper().Contains(commName)).ToArray();
-
-           if (!commands.Any())
-           {
-               return;
-           }
-
+           // I think this causes a data race. I'm not sure why or how to fix it.
            var guild = (await Context.Guilds.FindAsync(args.Guild.Id))?.AllowSearchCommands ?? true;
            if (!guild) return;
 
-           foreach (var commName in commands)
+           foreach (var commName in _commands.Keys.Where(commName => args.Message.Content.ToUpper().Contains(commName)))
            {
                try
                {
                    await _commands[commName].Execute(sender, args);
                }
-               // TODO: Send this to the database for auditing. Look into Serilog or just put it on the database.
+               // TODO: Send this to the database for auditing. I think DSharpPlus has a way of dealing with exceptions across all events.
                catch (Exception e)
                {
-                   Logger.LogError(e, "Failed to execute command {Command}", commName);
+                   Logger.LogError(e, $"Failed to execute command {commName}.");
                    await args.Message.RespondAsync("I was supposed to send you a message, but I failed somewhere. Please try again or contact the developer.");
                }
            }

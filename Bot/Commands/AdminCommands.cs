@@ -1,12 +1,9 @@
-using System;
-using System.Linq;
 using System.Threading.Tasks;
 using Data;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Bot.Commands
@@ -29,27 +26,22 @@ namespace Bot.Commands
         [Description("Shortcut to saying \"sans help admin\"")]
         public async Task Help(CommandContext ctx)
         {
-            var context = ctx.CommandsNext.CreateContext(ctx.Message, ctx.Prefix, ctx.CommandsNext.FindCommand("help", out _), "admin " + ctx.RawArgumentString);
+            var _rawArg = "admin";
+            var context = ctx.CommandsNext.CreateContext(ctx.Message, ctx.Prefix, ctx.CommandsNext.FindCommand("help", out _rawArg), "admin " + ctx.RawArgumentString);
             await ctx.CommandsNext.ExecuteCommandAsync(context);
         }
         
         [Command("toggle-search-commands"), Aliases("stoggle", "toggle-search")]
         [Description("Toggles whether search commands can be used on your server. Search commands are any special" +
                                                         " commands that sans car responds to even when there's no bot prefix.")]
-        public async Task ToggleSearchCommands(CommandContext ctx)
+        public async Task DisableSearchCommands(CommandContext ctx)
         {
-            var guild = await Context.Guilds.FindAsync(ctx.Guild.Id);
-            if (guild == null)
+            var guild = await Context.Guilds.FindAsync(ctx.Guild.Id) ?? new Guild
             {
-                guild = new Guild
-                {
-                    GuildId = ctx.Guild.Id,
-                    AllowSearchCommands = false
-                };
-                await Context.Guilds.AddAsync(guild);
-            }
-            
+                GuildId = ctx.Guild.Id,
+            };
             guild.AllowSearchCommands = !guild.AllowSearchCommands;
+            Context.Guilds.Update(guild);
             await Context.SaveChangesAsync();
 
             await ctx.RespondAsync($"Toggling search commands. New status: {guild.AllowSearchCommands}.");
@@ -57,22 +49,15 @@ namespace Bot.Commands
 
         [Command("toggle-quotes"), Aliases("qtoggle")]
         [Description("Toggles whether quotes can be used by normal users in your server. Remaining quotes will exist" +
-                     "in the database regardless.")]
+                                                        "in the database regardless.")]
         public async Task ToggleQuotes(CommandContext ctx)
         {
-            var guild = await Context.Guilds.FindAsync(ctx.Guild.Id);
-            if (guild == null)
+            var guild = await Context.Guilds.FindAsync(ctx.Guild.Id) ?? new Guild
             {
-                guild = new Guild
-                {
-                    GuildId = ctx.Guild.Id,
-                };
-                
-                await Context.Guilds.AddAsync(guild);
-            }
-
+                GuildId = ctx.Guild.Id,
+            };
             guild.AllowQuotes = !guild.AllowQuotes;
-            
+            Context.Guilds.Update(guild);
             await Context.SaveChangesAsync();
 
             await ctx.RespondAsync($"Toggling quotes. New status: {guild.AllowQuotes}.");
@@ -99,30 +84,22 @@ namespace Bot.Commands
         [Description("Set the channel to which quotes will be posted whenever someone adds one.")]
         public async Task SetQuoteChannel(CommandContext ctx, DiscordChannel chan)
         {
-
             var channel = await Context.Channels.FindAsync(chan.Id);
+
             if (channel == null)
-            { 
-                channel = new Channel
-                {
-                    Id = chan.Id
-                };
+            {
+                channel = new Channel {Id = chan.Id};
                 await Context.Channels.AddAsync(channel);
             }
 
-            var guild = await Context.Guilds.FindAsync(ctx.Guild.Id);
-            if (guild == null)
+            var guild = await Context.Guilds.FindAsync(ctx.Guild.Id) ?? new Guild
             {
-                guild = new Guild
-                {
-                    GuildId = ctx.Guild.Id,
-                    QuoteChannel = channel
-                };
-                await Context.Guilds.AddAsync(guild);
-            }
+                GuildId = ctx.Guild.Id
+            };
 
             guild.QuoteChannel = channel;
 
+            Context.Guilds.Update(guild);
             await Context.SaveChangesAsync();
 
             var enabled = guild.EnableQuoteChannel ? "Enabled" : "Disabled";
@@ -133,24 +110,18 @@ namespace Bot.Commands
         [Description("Toggle posting quotes to a certain channel when added.")]
         public async Task ToggleQuoteChannel(CommandContext ctx)
         {
-            var guild = await Context.Guilds.FindAsync(ctx.Guild.Id);
-            if (guild == null)
+            var guild = await Context.Guilds.FindAsync(ctx.Guild.Id) ?? new Guild
             {
-                guild = new Guild
-                {
-                    GuildId = ctx.Guild.Id
-                };
-                await Context.Guilds.AddAsync(guild);
-            } 
-            
+                GuildId = ctx.Guild.Id
+            };
             guild.EnableQuoteChannel = !guild.EnableQuoteChannel;
 
             if (guild.EnableQuoteChannel && guild.QuoteChannel == null)
             {
                 await ctx.RespondAsync("Please set a quote channel using \"sans admin set-quote-channel <channel>\".");
-                return;
             }
             
+            Context.Guilds.Update(guild);
             await Context.SaveChangesAsync();
 
             var enabled = guild.EnableQuoteChannel ? "Enabled" : "Disabled";
