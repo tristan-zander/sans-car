@@ -5,6 +5,8 @@ jobs:
   deploy-code:
     runs-on: ubuntu-latest
     steps:
+      - name: Create test file.
+        run: touch example
       - name: Deploy
         uses: easingthemes/ssh-deploy@main
         env:
