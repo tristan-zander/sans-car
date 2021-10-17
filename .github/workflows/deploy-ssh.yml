@@ -27,8 +27,8 @@ jobs:
           ARGS: >-
             -rltgoDzvO
             --exclude='.git'
-            --exclude-'.idea'
-            --exclude-'.vscode'
+            --exclude='.idea'
+            --exclude='.vscode'
           REMOTE_HOST: ${{ secrets.SERVER_SSH_HOST }}
           REMOTE_USER: ${{ secrets.SERVER_SSH_USER }}
           SOURCE: ./deployable
