@@ -5,15 +5,31 @@ jobs:
   deploy-code:
     runs-on: ubuntu-latest
     steps:
-      - name: Create test file.
-        run: touch example
-      - name: Deploy
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup .NET Core SDK
+        uses: actions/setup-dotnet@v1.8.2
+
+      - name: Install dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Publish app.
+        run: dotnet publish -c Release -o ./deployable --self-contained true
+
+      - name: Deploy to server.
         uses: easingthemes/ssh-deploy@main
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_KEY }}
           ARGS: >-
             -rltgoDzvO
             --exclude='.git'
+            --exclude-'.idea'
+            --exclude-'.vscode'
           REMOTE_HOST: ${{ secrets.SERVER_SSH_HOST }}
           REMOTE_USER: ${{ secrets.SERVER_SSH_USER }}
-          TARGET: /opt/Testing
+          SOURCE: ./deployable
+          TARGET: ${{ secrets.SERVER_DEPLOY_TARGET }}
