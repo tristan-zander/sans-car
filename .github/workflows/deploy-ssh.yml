@@ -1,8 +1,5 @@
 name: Deploy to Server w/ SSH
-on: 
-  push:
-    branches: 
-      - master
+on: [push]
 
 jobs:
   deploy-code:
