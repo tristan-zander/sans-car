@@ -1,5 +1,5 @@
 # Sans Car
-Discord bot and website.
+Discord bot and website, hosted at [the Sans Car website.](https://sanscar.net)
 
 ## Dependencies
 * PostgreSQL

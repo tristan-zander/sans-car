@@ -1,8 +1,6 @@
 ﻿using System;
-using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
 using Bot.Commands;
 using Data;
@@ -14,6 +12,7 @@ using DSharpPlus.Interactivity.Enums;
 using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.Lavalink;
 using DSharpPlus.Net;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using LavalinkConfiguration = DSharpPlus.Lavalink.LavalinkConfiguration;
@@ -92,13 +91,38 @@ namespace Bot
 
                 commands[shard].CommandErrored += async (ev, arg) =>
                 {
-                    bot.Logger.LogError(arg.Exception, "CommandsNext command failed");
+                    
 
-                    if (arg.Exception is CommandNotFoundException or ArgumentException)
+                    switch (arg.Exception)
                     {
-                        return;
+                        case CommandNotFoundException or ArgumentException:
+                            return;
+                        case DbUpdateConcurrencyException e:
+                        {
+                            foreach (var entry in e.Entries)
+                            {
+                                var proposedValues = entry.CurrentValues;
+                                var databaseValues = await entry.GetDatabaseValuesAsync();
+
+                                if (databaseValues == null)
+                                {
+                                    // We probably did an update with a database entry that doesn't exist here.
+                                    entry.OriginalValues.SetValues(proposedValues);
+                                    
+                                    continue;
+                                }
+                                
+                                // Otherwise prioritize the database values.
+                                entry.OriginalValues.SetValues(databaseValues);
+                            }
+
+                            await dbContext.SaveChangesAsync();
+                            break;
+                        }
                     }
                     
+                    bot.Logger.LogError(arg.Exception, "CommandsNext command failed");
+
                     // TODO: Send the exception to the database.
                     
                     await arg.Context.RespondAsync("The bot ran into an error while trying to execute your command. " +
@@ -109,7 +133,7 @@ namespace Bot
 
             }
 
-            var searchCommands = new SearchCommands(bot.Logger, new SansDbContext(projectConfig.Database.ConnectionString));
+            var searchCommands = new SearchCommands(bot.Logger, dbContext);
             bot.MessageCreated += searchCommands.SearchCommandsEvent;
 
             #endregion InitialBotConfig
@@ -120,14 +144,14 @@ namespace Bot
 
             var endpoint = new ConnectionEndpoint
             {
-                Hostname = "127.0.0.1", // From your server configuration.
-                Port = 2333 // From your server configuration
+                Hostname = projectConfig.Lavalink.Address, // From your server configuration.
+                Port = projectConfig.Lavalink.Port // From your server configuration
             };
 
             var lavalinkConfig = new LavalinkConfiguration
             {
                 // TODO: Get password from config
-                Password = "youshallnotpass", // From your server configuration.
+                Password = projectConfig.Lavalink.Password, // From your server configuration.
                 RestEndpoint = endpoint,
                 SocketEndpoint = endpoint
             };

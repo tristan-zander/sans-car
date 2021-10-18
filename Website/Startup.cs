@@ -3,6 +3,7 @@ using Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -27,17 +28,17 @@ namespace SansCar
             services.AddControllersWithViews();
             
             // TODO: Runtime compilation only in dev mode.
-            services.AddRazorPages().AddRazorRuntimeCompilation();
+            // services.AddRazorPages().AddRazorRuntimeCompilation();
+            services.AddRazorPages();
             
             services.AddDbContext<SansDbContext>(options =>
             {
                 options.UseNpgsql();
             });
             
-            // In production, the React files will be served from this directory
-            services.AddSpaStaticFiles(configuration => { configuration.RootPath = "ClientApp/build"; });
+            // services.AddSpaStaticFiles(configuration => { configuration.RootPath = "ClientApp/build"; });
 
-            services.AddHealthChecks();
+            // services.AddHealthChecks();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -54,6 +55,14 @@ namespace SansCar
                 app.UseHsts();
             }
 
+            // For nginx
+            /*
+            app.UseForwardedHeaders(new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+            });
+            */
+            
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseDefaultFiles();
