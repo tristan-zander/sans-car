@@ -22,10 +22,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Resource Include="Resources\bring-me-the-girl.png" />
-      <Resource Include="Resources\sans-car.jpg">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Resource>
+      <Content Include="Resources\**\*" CopyToPublishDirectory="Always" CopyToOutputDirectory="Always" />
     </ItemGroup>
 
     <ItemGroup>
