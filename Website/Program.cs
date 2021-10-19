@@ -14,6 +14,15 @@ namespace SansCar
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
+                    webBuilder.UseKestrel((webHostContext, options) =>
+                        {
+                            var socketPath = webHostContext.Configuration["ListenUnixSocket"];
+                            if (!string.IsNullOrEmpty(socketPath))
+                            {
+                                options.ListenUnixSocket(socketPath);
+                            }
+                        }
+                    );
                     webBuilder.UseStartup<Startup>();
                 });
     }
