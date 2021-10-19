@@ -33,12 +33,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Content Include="..\config.example.json">
-        <Link>config.example.json</Link>
-      </Content>
-      <Content Include="..\config.json">
-        <Link>config.json</Link>
-      </Content>
       <Content Include="..\docker\Bot.Dockerfile">
         <Link>docker\Bot.Dockerfile</Link>
       </Content>
