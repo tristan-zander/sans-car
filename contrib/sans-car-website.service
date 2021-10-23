@@ -3,8 +3,8 @@ Description=Sans car website on NGINX
 
 [Service]
 # Replace with your system config
-WorkingDirectory=/opt/sans-car/
-ExecStart=/opt/sans-car/deployable/Website --launch-profile SansCar-production
+WorkingDirectory=/opt/sans-car/Website
+ExecStart=/usr/bin/dotnet run /opt/sans-car/deployable/Website.dll --launch-profile Production
 Restart=always
 # Restart service after 10 seconds if the dotnet service crashes:
 RestartSec=10
