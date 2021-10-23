@@ -13,6 +13,8 @@ riderModule.iml
 
 *.DotSettings.user
 
+deployable/
+
 # Lavalink jar, configs, and logs
 **/lavalink.yml
 **/lavalink.*.yml
