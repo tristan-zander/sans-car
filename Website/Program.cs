@@ -12,6 +12,19 @@ namespace SansCar
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
+                .ConfigureAppConfiguration((context, builder) =>
+                {
+                    builder.Sources.Clear();
+
+                    var env = context.HostingEnvironment;
+
+                    if (args != null)
+                        builder.AddCommandLine(args);
+                    builder.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                        .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true);
+
+                    builder.AddEnvironmentVariables();
+                })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseKestrel((webHostContext, options) =>
