@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace SansCar
 {
@@ -42,7 +43,7 @@ namespace SansCar
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)
         {
             if (env.IsDevelopment())
             {
@@ -56,13 +57,15 @@ namespace SansCar
             }
 
             // For nginx
-            /*
-            app.UseForwardedHeaders(new ForwardedHeadersOptions
+            if (Configuration.GetValue<bool>("UseForwardedHeaders"))
             {
-                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
-            });
-            */
-            
+                logger.LogInformation("Using forwarded headers");
+                app.UseForwardedHeaders(new ForwardedHeadersOptions
+                {
+                    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+                });
+            }
+
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseDefaultFiles();
