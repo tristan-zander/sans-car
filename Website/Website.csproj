@@ -32,19 +32,4 @@
       <ProjectReference Include="..\Data\Data.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Content Include="..\docker\Bot.Dockerfile">
-        <Link>docker\Bot.Dockerfile</Link>
-      </Content>
-      <Content Include="..\docker\docker-compose.yml">
-        <Link>docker\docker-compose.yml</Link>
-      </Content>
-      <Content Include="..\docker\Lavalink.Dockerfile">
-        <Link>docker\Lavalink.Dockerfile</Link>
-      </Content>
-      <Content Include="..\docker\Website.Dockerfile">
-        <Link>docker\Website.Dockerfile</Link>
-      </Content>
-    </ItemGroup>
-
 </Project>
