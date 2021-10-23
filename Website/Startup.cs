@@ -31,12 +31,18 @@ namespace SansCar
             // TODO: Runtime compilation only in dev mode.
             // services.AddRazorPages().AddRazorRuntimeCompilation();
             services.AddRazorPages();
-            
-            services.AddDbContext<SansDbContext>(options =>
+
+            services.AddDbContext<SansDbContext>(options => { options.UseNpgsql(); });
+
+            // For nginx
+            if (Configuration.GetValue<bool>("UseForwardedHeaders"))
             {
-                options.UseNpgsql();
-            });
-            
+                services.Configure<ForwardedHeadersOptions>(options =>
+                {
+                    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+                });
+            }
+
             // services.AddSpaStaticFiles(configuration => { configuration.RootPath = "ClientApp/build"; });
 
             // services.AddHealthChecks();
@@ -45,6 +51,7 @@ namespace SansCar
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)
         {
+            app.UseForwardedHeaders();
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
