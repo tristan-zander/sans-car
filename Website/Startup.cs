@@ -69,7 +69,7 @@ namespace SansCar
             // app.UseSpaStaticFiles();
 
             app.UseRouting();
-            
+
             app.UseEndpoints(endpoints =>
             {
                 // var reactApp = endpoints.CreateApplicationBuilder();
@@ -83,11 +83,11 @@ namespace SansCar
                     }
                 });
                 */
-                
+
                 // endpoints.MapGet("/app/{**extra}", reactApp.Build());
 
                 endpoints.MapRazorPages();
-               
+
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller}/{action=Index}");
