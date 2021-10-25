@@ -8,32 +8,6 @@ using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace Data
 {
-    public static class ProjectConfiguration
-    {
-        public static FullConfiguration ReadConfigFile(string configPath = "")
-        {
-            if (configPath.Length <= 0)
-            {
-                // Get project root.
-                // Config path is expected to be in the current working directory.
-                // TODO: Read this from an environment variable or command line switch.
-                configPath = Path.GetFullPath("./config.json", Directory.GetCurrentDirectory());
-            }
-
-            var file = File.ReadAllText(configPath);
-            var deserializedConfig =
-                JsonSerializer.Deserialize<FullConfiguration>(file, new JsonSerializerOptions { IncludeFields = true });
-
-            if (deserializedConfig == null)
-            {
-                throw new Exception(
-                    "There was an error in your config file and it could not be properly deserialized.");
-            }
-
-            return deserializedConfig;
-        }
-    }
-
     public sealed class FullConfiguration
     {
         [JsonProperty("Bot")] public BotConfiguration Bot { get; set; }

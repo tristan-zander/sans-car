@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -13,6 +14,7 @@ using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.Lavalink;
 using DSharpPlus.Net;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using LavalinkConfiguration = DSharpPlus.Lavalink.LavalinkConfiguration;
@@ -35,32 +37,21 @@ namespace Bot
         {
             #region InitialBotConfig
 
-            FullConfiguration projectConfig = null;
-            
-            var dockerSecret = Environment.GetEnvironmentVariable("DOCKER_SECRET");
-            if (dockerSecret != null)
-            {
-                // Get the project files from docker.
-                throw new NotImplementedException("The bot currently isn't meant to be run under docker yet!");
-            }
-            else
-            {
-                projectConfig = ProjectConfiguration.ReadConfigFile();
-            }
+            IConfiguration config = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("config.json", true)
+                .AddEnvironmentVariables()
+                .AddUserSecrets<Program>()
+                .Build();
 
-            if (projectConfig.Bot.Token == null)
+            var discordConfiguration = new DiscordConfiguration
             {
-                throw new Exception("Did not assign environment tokens to TOKEN or DEV_TOKEN.");
-            }
-
-            var config = new DiscordConfiguration
-            {
-                Token = projectConfig.Bot.Token,
+                Token = config["Bot:Token"],
                 TokenType = TokenType.Bot,
                 Intents = DiscordIntents.AllUnprivileged
             };
 
-            var bot = new DiscordShardedClient(config);
+            var bot = new DiscordShardedClient(discordConfiguration);
 
             await bot.UseInteractivityAsync(new InteractivityConfiguration
             {
@@ -69,17 +60,18 @@ namespace Bot
                 PaginationBehaviour = PaginationBehaviour.WrapAround,
             });
 
-            var dbContext = new SansDbContext(projectConfig.Database.ConnectionString);
+            var dbContext = new SansDbContext(config["Database:ConnectionString"]);
 
             var services = new ServiceCollection()
                 .AddSingleton(bot.Logger)
-                .AddDbContext<SansDbContext>()
+                .AddSingleton(dbContext)
                 .BuildServiceProvider();
 
+            var botConfig = config.GetSection("Bot").Get<BotConfiguration>();
             var commands = await bot.UseCommandsNextAsync(
                 new CommandsNextConfiguration
                 {
-                    StringPrefixes = projectConfig.Bot.Prefixes ?? new [] {"sans ", "s?"},
+                    StringPrefixes = botConfig.Prefixes ?? new [] {"sans ", "s?"},
                     Services = services
                 });
             
@@ -142,16 +134,17 @@ namespace Bot
 
             #region LavaLinkConfig
 
+            var Lavalink = config.GetSection("Lavalink").Get<Data.LavalinkConfiguration>();
             var endpoint = new ConnectionEndpoint
             {
-                Hostname = projectConfig.Lavalink.Address, // From your server configuration.
-                Port = projectConfig.Lavalink.Port // From your server configuration
+                Hostname = Lavalink.Address, // From your server configuration.
+                Port = Lavalink.Port // From your server configuration
             };
 
             var lavalinkConfig = new LavalinkConfiguration
             {
                 // TODO: Get password from config
-                Password = projectConfig.Lavalink.Password, // From your server configuration.
+                Password = Lavalink.Password, // From your server configuration.
                 RestEndpoint = endpoint,
                 SocketEndpoint = endpoint
             };
