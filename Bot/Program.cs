@@ -25,7 +25,7 @@ namespace Bot
     {
         static void Main(string[] args)
         {
-            var client = RunBot().GetAwaiter().GetResult();
+            var client = RunBot(args).GetAwaiter().GetResult();
 
             Task.Delay(-1).Wait();
 
@@ -33,16 +33,24 @@ namespace Bot
             client.StopAsync().Wait();
         }
 
-        static async Task<DiscordShardedClient> RunBot()
+        static async Task<DiscordShardedClient> RunBot(string[] args)
         {
             #region InitialBotConfig
 
-            IConfiguration config = new ConfigurationBuilder()
+            var dotnetEnvironment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
+            var isDevelopment = dotnetEnvironment is "Development";
+
+            var builder = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("config.json", true)
                 .AddEnvironmentVariables()
-                .AddUserSecrets<Program>()
-                .Build();
+                .AddCommandLine(args);
+            if (isDevelopment)
+            {
+                builder.AddUserSecrets<Program>();
+            }
+
+            var config = builder.Build();
 
             var discordConfiguration = new DiscordConfiguration
             {
