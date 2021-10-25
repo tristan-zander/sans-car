@@ -11,11 +11,6 @@ namespace Data
         public DbSet<User> Users { get; set; }
         public DbSet<Quote> Quotes { get; set; }
         
-        public SansDbContext()
-        {
-            ConnectionString = ProjectConfiguration.ReadConfigFile().Database.ConnectionString;
-        }
-        
         public SansDbContext(string connectionString)
         {
             ConnectionString = connectionString;
