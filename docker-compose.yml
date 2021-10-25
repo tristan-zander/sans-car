@@ -1,16 +1,21 @@
 services:
   website:
     build: Website/Dockerfile
-    links:
+    depends_on:
       - proxy
         
   bot:
     build: Bot/Dockerfile
-    links:
+    depends_on:
       - db
 
   proxy:
     build: contrib/proxy.Dockerfile
+    ports:
+      - "80:80"
+    environment: 
+      - NGINX_HOST=sanscar.net
+      - NGINX_PORT=80
 
   db:
     image: postgres
