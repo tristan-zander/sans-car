@@ -1,0 +1,21 @@
+services:
+  website:
+    build: Website/Dockerfile
+    links:
+      - proxy
+        
+  bot:
+    build: Bot/Dockerfile
+    links:
+      - db
+
+  proxy:
+    build: contrib/proxy.Dockerfile
+
+  db:
+    image: postgres
+
+volumes:
+  sharedsockets: { }
+  databases: { }
+    
