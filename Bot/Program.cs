@@ -79,10 +79,10 @@ namespace Bot
             var commands = await bot.UseCommandsNextAsync(
                 new CommandsNextConfiguration
                 {
-                    StringPrefixes = botConfig.Prefixes ?? new [] {"sans ", "s?"},
+                    StringPrefixes = botConfig.Prefixes ?? new[] { "sans ", "s?" },
                     Services = services
                 });
-            
+
             foreach (var shard in bot.ShardClients.Keys)
             {
                 commands[shard]?.RegisterCommands(Assembly.GetExecutingAssembly());
@@ -91,40 +91,40 @@ namespace Bot
 
                 commands[shard].CommandErrored += async (ev, arg) =>
                 {
-                    
+
 
                     switch (arg.Exception)
                     {
                         case CommandNotFoundException or ArgumentException:
                             return;
                         case DbUpdateConcurrencyException e:
-                        {
-                            foreach (var entry in e.Entries)
                             {
-                                var proposedValues = entry.CurrentValues;
-                                var databaseValues = await entry.GetDatabaseValuesAsync();
-
-                                if (databaseValues == null)
+                                foreach (var entry in e.Entries)
                                 {
-                                    // We probably did an update with a database entry that doesn't exist here.
-                                    entry.OriginalValues.SetValues(proposedValues);
-                                    
-                                    continue;
-                                }
-                                
-                                // Otherwise prioritize the database values.
-                                entry.OriginalValues.SetValues(databaseValues);
-                            }
+                                    var proposedValues = entry.CurrentValues;
+                                    var databaseValues = await entry.GetDatabaseValuesAsync();
 
-                            await dbContext.SaveChangesAsync();
-                            break;
-                        }
+                                    if (databaseValues == null)
+                                    {
+                                        // We probably did an update with a database entry that doesn't exist here.
+                                        entry.OriginalValues.SetValues(proposedValues);
+
+                                        continue;
+                                    }
+
+                                    // Otherwise prioritize the database values.
+                                    entry.OriginalValues.SetValues(databaseValues);
+                                }
+
+                                await dbContext.SaveChangesAsync();
+                                break;
+                            }
                     }
-                    
+
                     bot.Logger.LogError(arg.Exception, "CommandsNext command failed");
 
                     // TODO: Send the exception to the database.
-                    
+
                     await arg.Context.RespondAsync("The bot ran into an error while trying to execute your command. " +
                                                    "Please try again or contact the developer.");
                 };

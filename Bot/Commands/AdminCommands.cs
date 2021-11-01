@@ -32,7 +32,7 @@ namespace Bot.Commands
             var context = ctx.CommandsNext.CreateContext(ctx.Message, ctx.Prefix, ctx.CommandsNext.FindCommand("help", out _), "admin " + ctx.RawArgumentString);
             await ctx.CommandsNext.ExecuteCommandAsync(context);
         }
-        
+
         [Command("toggle-search-commands"), Aliases("stoggle", "toggle-search")]
         [Description("Toggles whether search commands can be used on your server. Search commands are any special" +
                                                         " commands that sans car responds to even when there's no bot prefix.")]
@@ -48,7 +48,7 @@ namespace Bot.Commands
                 };
                 await Context.Guilds.AddAsync(guild);
             }
-            
+
             guild.AllowSearchCommands = !guild.AllowSearchCommands;
             await Context.SaveChangesAsync();
 
@@ -67,19 +67,19 @@ namespace Bot.Commands
                 {
                     GuildId = ctx.Guild.Id,
                 };
-                
+
                 await Context.Guilds.AddAsync(guild);
             }
 
             guild.AllowQuotes = !guild.AllowQuotes;
-            
+
             await Context.SaveChangesAsync();
 
             await ctx.RespondAsync($"Toggling quotes. New status: {guild.AllowQuotes}.");
         }
 
         // This command explicitly must be executed by the owner so bad admins can't wipe server data.
-        [Command("delete-quotes"),Aliases("qdelete"), RequireOwner]
+        [Command("delete-quotes"), Aliases("qdelete"), RequireOwner]
         [Description("(Unimplemented) Delete all quotes for your server. Quotes will remain in the database for a " +
                      "certain period of time before being deleted but will be unable to be accessed.")]
         public async Task DeleteQuotes(CommandContext ctx)
@@ -102,7 +102,7 @@ namespace Bot.Commands
 
             var channel = await Context.Channels.FindAsync(chan.Id);
             if (channel == null)
-            { 
+            {
                 channel = new Channel
                 {
                     Id = chan.Id
@@ -128,7 +128,7 @@ namespace Bot.Commands
             var enabled = guild.EnableQuoteChannel ? "Enabled" : "Disabled";
             await ctx.RespondAsync($"Setting the quote channel to {chan}. Quote channel status is: {enabled}.");
         }
-        
+
         [Command("toggle-quote-channel"), Aliases("qctoggle")]
         [Description("Toggle posting quotes to a certain channel when added.")]
         public async Task ToggleQuoteChannel(CommandContext ctx)
@@ -141,8 +141,8 @@ namespace Bot.Commands
                     GuildId = ctx.Guild.Id
                 };
                 await Context.Guilds.AddAsync(guild);
-            } 
-            
+            }
+
             guild.EnableQuoteChannel = !guild.EnableQuoteChannel;
 
             if (guild.EnableQuoteChannel && guild.QuoteChannel == null)
@@ -150,7 +150,7 @@ namespace Bot.Commands
                 await ctx.RespondAsync("Please set a quote channel using \"sans admin set-quote-channel <channel>\".");
                 return;
             }
-            
+
             await Context.SaveChangesAsync();
 
             var enabled = guild.EnableQuoteChannel ? "Enabled" : "Disabled";

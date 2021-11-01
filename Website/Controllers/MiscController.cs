@@ -3,9 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace SansCar.Controllers
 {
-    public class MiscController: Controller
+    public class MiscController : Controller
     {
-    
+
         // Redirect to Discord's OAuth 2.0 page
         [HttpGet("/add-bot")]
         public IActionResult AddBot()

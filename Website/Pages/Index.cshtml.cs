@@ -6,7 +6,7 @@ namespace SansCar.Pages
     {
         public void OnGet()
         {
-            
+
         }
     }
 }
