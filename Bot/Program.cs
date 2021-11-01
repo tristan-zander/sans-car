@@ -30,6 +30,7 @@ namespace Bot
             Task.Delay(-1).Wait();
 
             // TODO: be able to restart the bot on a whim if you're an admin.
+            // Use a Monitor and lock to do this.
             client.StopAsync().Wait();
         }
 

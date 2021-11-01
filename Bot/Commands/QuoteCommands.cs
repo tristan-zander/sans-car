@@ -91,13 +91,15 @@ namespace Bot.Commands
                     .WithColor(DiscordColor.Blue)
                     .WithUrl("https://sanscar.net")
                     .AddField($"{blamedUser.Username}#{blamedUser.Discriminator}", $"{quote.Message}")
+                    .WithFooter($"ID: {quote.QuoteId}")
                     .WithTimestamp(quote.TimeAdded)
                     .Build();
                 var channel = await ctx.Client.GetChannelAsync(guild.QuoteChannel.Id);
                 await channel.SendMessageAsync(embed);
             }
 
-            await ctx.RespondAsync($"Successfully added quote: ```{entity.Entity.Message.Replace("`", "")}```");
+            await ctx.RespondAsync($"Successfully added quote: ```{entity.Entity.Message.Replace("`", "")}```\n" +
+                $"ID: {quote.QuoteId}");
         }
 
         // TODO add functionality for "sans quote list --show ids"
@@ -335,16 +337,12 @@ namespace Bot.Commands
         public SansDbContext Database { get; init; }
         public Task<Optional<Quote>> ConvertAsync(string value, CommandContext ctx)
         {
-            Quote quote = null;
             if (Guid.TryParse(value, out var quoteId))
             {
-                quote = Database.Quotes
+                // Include all objects from other tables like this?
+                var quote = Database.Quotes
                     .Include(i => i.Guild)
-                    .Include(i => i.Message)
                     .Include(i => i.BlamedUser)
-                    .Include(i => i.DiscordMessage)
-                    .Include(i => i.QuoteId)
-                    .Include(i => i.TimeAdded)
                     .First(q => q.QuoteId == quoteId);
                 return Task.FromResult(Optional.FromValue(quote));
             }
