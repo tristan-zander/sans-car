@@ -1,0 +1,16 @@
+deployable/
+
+**/bin/
+**/obj/
+/packages/
+riderModule.iml
+/_ReSharper.Caches/
+.idea/
+.vscode/
+
+**/.env
+*.env
+
+*.DotSettings.user
+
+**/logs/

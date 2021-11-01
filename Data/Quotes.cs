@@ -8,15 +8,15 @@ namespace Data
     public class Quote
     {
         [Key] public Guid QuoteId { get; set; } = Guid.NewGuid();
-        
+
         [Required]
         public Guild Guild { get; set; }
         [Required, MaxLength(500)]
         public string Message { get; set; }
-        
+
         [Required]
         public DateTimeOffset TimeAdded { get; set; }
-        
+
         /// <summary>
         /// The user that submitted the quote.
         /// </summary>
@@ -28,7 +28,7 @@ namespace Data
         public Quote()
         {
         }
-        
+
         public Quote(Quote other, User user = null, Guild guild = null)
         {
             QuoteId = other.QuoteId;

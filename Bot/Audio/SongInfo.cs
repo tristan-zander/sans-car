@@ -23,7 +23,7 @@ namespace Bot.Audio
             }
 
             Info = res;
-            
+
             // TODO: add better ways to filter through tracks.
             Name = res.Tracks.First().Title;
         }
