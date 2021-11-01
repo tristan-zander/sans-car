@@ -147,17 +147,17 @@ namespace Bot
 
             #region LavaLinkConfig
 
-            var Lavalink = config.GetSection("Lavalink").Get<Data.LavalinkConfiguration>();
+            var lavalinkSettings = config.GetSection("Lavalink").Get<Data.LavalinkConfiguration>();
             var endpoint = new ConnectionEndpoint
             {
-                Hostname = Lavalink.Address, // From your server configuration.
-                Port = Lavalink.Port // From your server configuration
+                Hostname = lavalinkSettings.Address, // From your server configuration.
+                Port = lavalinkSettings.Port // From your server configuration
             };
 
             var lavalinkConfig = new LavalinkConfiguration
             {
                 // TODO: Get password from config
-                Password = Lavalink.Password, // From your server configuration.
+                Password = lavalinkSettings.Password, // From your server configuration.
                 RestEndpoint = endpoint,
                 SocketEndpoint = endpoint
             };
