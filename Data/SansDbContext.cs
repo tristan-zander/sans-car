@@ -17,7 +17,7 @@ namespace Data
         {
             ConnectionString = "Host=localhost;Database=sans_car;";
         }
-        
+
         public SansDbContext(string connectionString)
         {
             ConnectionString = connectionString;

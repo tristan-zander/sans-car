@@ -131,7 +131,7 @@ namespace Bot
 
                     // TODO: Send the exception to the database.
 
-                    await arg.Context.RespondAsync($"The bot ran into an error while trying to execute your command.\n\"{arg.Exception.Message}\"");
+                    await arg.Context.RespondAsync($"The bot ran into an error while trying to execute your command.\n```{arg.Exception.Message}```");
                 };
 
                 #endregion
