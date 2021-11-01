@@ -25,7 +25,7 @@ namespace Bot.Commands
     {
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
         public ILogger<BaseDiscordClient> Logger { private get; set; }
-        
+
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
         // public GuildAudioPlayer Player { private get; set; }
 
@@ -132,7 +132,7 @@ namespace Bot.Commands
             var loadResult = await node.Rest.GetTracksAsync(search);
             {
             }
-            
+
             if (loadResult.LoadResultType is LavalinkLoadResultType.LoadFailed or LavalinkLoadResultType.NoMatches)
             {
                 await ctx.RespondAsync($"Track search failed for {search}.");
@@ -145,7 +145,7 @@ namespace Bot.Commands
 
             await ctx.RespondAsync($"Now playing {track.Title}!");
         }
-        
+
         [Command("pause"), Aliases("stop")]
         [Description("Pauses audio playback.")]
         public async Task Pause(CommandContext ctx)
@@ -173,7 +173,7 @@ namespace Bot.Commands
             }
 
             await conn.PauseAsync();
-        } 
+        }
         /* TODO: Implement playing and queuing multiple urls.
         [Command("play")]
         public async Task Play(CommandContext ctx, params Uri[] uris)

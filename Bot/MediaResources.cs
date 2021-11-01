@@ -13,7 +13,7 @@ namespace Bot
         public MediaResourceException(string message, Exception inner) : base(message, inner)
         { }
     }
-    
+
     public static class MediaResources
     {
         // do not access directly.

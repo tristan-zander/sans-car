@@ -18,7 +18,7 @@ namespace SansCar
                     builder.Sources.Clear();
 
                     var env = context.HostingEnvironment;
-                    
+
                     if (args != null)
                     {
                         builder.AddCommandLine(args);
@@ -28,7 +28,7 @@ namespace SansCar
                         .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true);
 
                     builder.AddEnvironmentVariables();
-                    
+
                     if (env.IsDevelopment())
                     {
                         builder.AddUserSecrets<Program>();

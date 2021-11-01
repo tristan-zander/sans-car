@@ -27,7 +27,7 @@ namespace SansCar
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllersWithViews();
-            
+
             // TODO: Runtime compilation only in dev mode.
             // services.AddRazorPages().AddRazorRuntimeCompilation();
             services.AddRazorPages();

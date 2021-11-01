@@ -17,7 +17,7 @@ namespace Data
         public bool AllowQuotes { get; set; } = true;
         public List<Quote> Quotes { get; set; } = new List<Quote>();
         public bool EnableQuoteChannel { get; set; } = false;
-        public Channel? QuoteChannel{ get; set; }
+        public Channel? QuoteChannel { get; set; }
         public bool AllowAudio { get; set; } = true;
         public AudioPlayer? AudioPlayer { get; set; }
     }

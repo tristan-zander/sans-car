@@ -19,14 +19,14 @@ namespace Bot.Commands
     interface ISearchCommand
     {
         public string GetName();
-        
+
         public string[] GetAliases();
-        
+
         public void SetLogger(ILogger<BaseDiscordClient> logger);
-        
+
         public Task Execute(DiscordClient sender, MessageCreateEventArgs args);
     }
-    
+
 
     // Remove this thing eventually. It's just a meme thing after all.
     public class SearchCommands : BaseCommandModule
@@ -56,34 +56,34 @@ namespace Bot.Commands
                 array.Add(alias.ToUpper().Trim(), command);
             }
         }
-        
+
         public async Task SearchCommandsEvent(DiscordClient sender, MessageCreateEventArgs args)
         {
-           if (args.Author.IsBot) return;
+            if (args.Author.IsBot) return;
 
-           var commands = _commands.Keys.Where(commName => args.Message.Content.ToUpper().Contains(commName)).ToArray();
+            var commands = _commands.Keys.Where(commName => args.Message.Content.ToUpper().Contains(commName)).ToArray();
 
-           if (!commands.Any())
-           {
-               return;
-           }
+            if (!commands.Any())
+            {
+                return;
+            }
 
-           var guild = (await Context.Guilds.FindAsync(args.Guild.Id))?.AllowSearchCommands ?? true;
-           if (!guild) return;
+            var guild = (await Context.Guilds.FindAsync(args.Guild.Id))?.AllowSearchCommands ?? true;
+            if (!guild) return;
 
-           foreach (var commName in commands)
-           {
-               try
-               {
-                   await _commands[commName].Execute(sender, args);
-               }
-               // TODO: Send this to the database for auditing. Look into Serilog or just put it on the database.
-               catch (Exception e)
-               {
-                   Logger.LogError(e, "Failed to execute command {Command}", commName);
-                   await args.Message.RespondAsync("I was supposed to send you a message, but I failed somewhere. Please try again or contact the developer.");
-               }
-           }
+            foreach (var commName in commands)
+            {
+                try
+                {
+                    await _commands[commName].Execute(sender, args);
+                }
+                // TODO: Send this to the database for auditing. Look into Serilog or just put it on the database.
+                catch (Exception e)
+                {
+                    Logger.LogError(e, "Failed to execute command {Command}", commName);
+                    await args.Message.RespondAsync("I was supposed to send you a message, but I failed somewhere. Please try again or contact the developer.");
+                }
+            }
         }
     }
 
@@ -97,7 +97,7 @@ namespace Bot.Commands
 
         public string[] GetAliases()
         {
-            return new[] {"sans car", "sanscar"};
+            return new[] { "sans car", "sanscar" };
         }
 
         public void SetLogger(ILogger<BaseDiscordClient> logger)
@@ -118,7 +118,7 @@ namespace Bot.Commands
     public class KyloRenSearchCommand : ISearchCommand
     {
         private ILogger<BaseDiscordClient> _logger;
-        
+
         public string GetName()
         {
             return "Bring me the girl";
@@ -132,7 +132,7 @@ namespace Bot.Commands
                 "kylo ren"
             };
         }
-        
+
         public void SetLogger(ILogger<BaseDiscordClient> logger)
         {
             _logger = logger;

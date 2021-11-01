@@ -28,7 +28,7 @@ namespace Bot.Commands
             Context = context;
             Logger = logger;
         }
-        
+
         [Command("add"), Aliases("a")]
         [Description("Add a quote that can be accessed from this server.")]
         public async Task AddQuote(CommandContext ctx, string quotedText)
@@ -127,7 +127,7 @@ namespace Bot.Commands
                 .Where(q => q.Guild.GuildId == ctx.Guild.Id)
                 .OrderByDescending(q => q.TimeAdded)
                 .Take(50).ToList();
-            
+
             if (quotes.Count <= 0)
             {
                 await ctx.RespondAsync("Looks like you don't have any quotes on this server yet :(");
@@ -264,12 +264,12 @@ namespace Bot.Commands
                 await Context.Guilds.AddAsync(guild);
             }
             guild.AllowQuotes = false;
-            
+
             await Context.SaveChangesAsync();
 
             await ctx.RespondAsync("Disabling quotes (existing quotes will not be deleted).");
         }
-        
+
         [Command("enable"), RequireOwner]
         [Description("Enables the quotes feature for regular users.")]
         public async Task EnableQuotes(CommandContext ctx)
@@ -286,7 +286,7 @@ namespace Bot.Commands
             }
 
             guild.AllowQuotes = true;
-            
+
             await Context.SaveChangesAsync();
 
             await ctx.RespondAsync("Enabling quotes feature.");

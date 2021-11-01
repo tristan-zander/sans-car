@@ -22,12 +22,12 @@ namespace Bot.Audio
 
         public void QueueSong(string search)
         {
-            
+
         }
-        
+
         public void QueueSong(Uri search)
         {
-            
+
         }
 
         public DiscordMessage SongQueueToDiscordMessage()
