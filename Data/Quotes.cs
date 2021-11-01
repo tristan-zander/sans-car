@@ -22,7 +22,7 @@ namespace Data
         /// </summary>
         [Required]
         public User BlamedUser { get; set; }
-        
+
         public ulong? DiscordMessage { get; set; }
 
         public Quote()

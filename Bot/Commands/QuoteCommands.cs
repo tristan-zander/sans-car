@@ -6,6 +6,7 @@ using Data;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.CommandsNext.Converters;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity.Enums;
 using DSharpPlus.Interactivity.Extensions;
@@ -250,11 +251,14 @@ namespace Bot.Commands
         }
 
         [Command, Description("Edit a previously added quote.")]
-        public async Task Edit(CommandContext ctx, [Description("The ID or a text copy of the quote that you want to change.")] Quote quote, [RemainingText] string newQuoteMessage)
+        public async Task Edit(CommandContext ctx,
+            [Description("The ID or a text copy of the quote that you want to change.")]
+            Quote quote,
+            [RemainingText, Description("The new quote message.")] string newQuoteMessage)
         {
-            
+            await ctx.RespondAsync("Hey, I found your quote!");
         }
-        
+
 
         [Command("disable"), RequireOwner]
         [Description("Disables whether regular users can use the quotes feature.")]
@@ -323,6 +327,29 @@ namespace Bot.Commands
             }
 
             return true;
+        }
+    }
+
+    public class QuoteConvertor : IArgumentConverter<Quote>
+    {
+        public SansDbContext Database { get; init; }
+        public Task<Optional<Quote>> ConvertAsync(string value, CommandContext ctx)
+        {
+            Quote quote = null;
+            if (Guid.TryParse(value, out var quoteId))
+            {
+                quote = Database.Quotes
+                    .Include(i => i.Guild)
+                    .Include(i => i.Message)
+                    .Include(i => i.BlamedUser)
+                    .Include(i => i.DiscordMessage)
+                    .Include(i => i.QuoteId)
+                    .Include(i => i.TimeAdded)
+                    .First(q => q.QuoteId == quoteId);
+                return Task.FromResult(Optional.FromValue(quote));
+            }
+
+            return Task.FromResult(Optional.FromNoValue<Quote>());
         }
     }
 }

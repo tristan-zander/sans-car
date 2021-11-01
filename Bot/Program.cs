@@ -71,7 +71,7 @@ namespace Bot
             var dbContext = new SansDbContext(config["Database:ConnectionString"]);
 
             var services = new ServiceCollection()
-                .AddSingleton(bot.Logger)
+                .AddLogging()
                 .AddSingleton(dbContext)
                 .BuildServiceProvider();
 
@@ -86,6 +86,12 @@ namespace Bot
             foreach (var shard in bot.ShardClients.Keys)
             {
                 commands[shard]?.RegisterCommands(Assembly.GetExecutingAssembly());
+                commands[shard]?.RegisterConverter(
+                    new QuoteConvertor
+                    {
+                        Database = new SansDbContext(config["Database:ConnectionString"])
+                    }
+                );
 
                 #region OnCommandError
 
@@ -125,8 +131,7 @@ namespace Bot
 
                     // TODO: Send the exception to the database.
 
-                    await arg.Context.RespondAsync("The bot ran into an error while trying to execute your command. " +
-                                                   "Please try again or contact the developer.");
+                    await arg.Context.RespondAsync($"The bot ran into an error while trying to execute your command.\n\"{arg.Exception.Message}\"");
                 };
 
                 #endregion

@@ -12,11 +12,17 @@ namespace Data
         public DbSet<User> Users { get; set; }
         public DbSet<Quote> Quotes { get; set; }
         public DbSet<Quote> QuotesToPublish { get; set; }
-        
+
         public SansDbContext(string connectionString)
         {
             ConnectionString = connectionString;
         }
+
+        public SansDbContext(DbContextOptions<SansDbContext> options)
+            : base(options)
+        {
+        }
+
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
