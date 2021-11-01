@@ -124,9 +124,8 @@ namespace Bot
                     bot.Logger.LogError(arg.Exception, "CommandsNext command failed");
 
                     // TODO: Send the exception to the database.
-
-                    await arg.Context.RespondAsync("The bot ran into an error while trying to execute your command. " +
-                                                   "Please try again or contact the developer.");
+                    
+                    await arg.Context.RespondAsync($"The bot ran into an error while trying to execute your command.\n```{arg.Exception.Message}```");
                 };
 
                 #endregion
