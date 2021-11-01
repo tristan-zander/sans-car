@@ -21,9 +21,9 @@ namespace Bot.Commands
     public class QuoteCommands : BaseCommandModule
     {
         private SansDbContext Context { get; }
-        private ILogger<BaseDiscordClient> Logger { get; }
+        private ILogger<QuoteCommands> Logger { get; }
 
-        public QuoteCommands(SansDbContext context, ILogger<BaseDiscordClient> logger)
+        public QuoteCommands(SansDbContext context, ILogger<QuoteCommands> logger)
         {
             Context = context;
             Logger = logger;
@@ -248,6 +248,13 @@ namespace Bot.Commands
                 await ctx.RespondAsync(builder.ToString());
             }
         }
+
+        [Command, Description("Edit a previously added quote.")]
+        public async Task Edit(CommandContext ctx, [Description("The ID or a text copy of the quote that you want to change.")] Quote quote, [RemainingText] string newQuoteMessage)
+        {
+            
+        }
+        
 
         [Command("disable"), RequireOwner]
         [Description("Disables whether regular users can use the quotes feature.")]

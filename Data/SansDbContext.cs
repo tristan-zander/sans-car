@@ -1,3 +1,4 @@
+using System;
 using Microsoft.EntityFrameworkCore;
 
 namespace Data
@@ -10,6 +11,7 @@ namespace Data
         public DbSet<Channel> Channels { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Quote> Quotes { get; set; }
+        public DbSet<Quote> QuotesToPublish { get; set; }
         
         public SansDbContext(string connectionString)
         {

@@ -22,6 +22,8 @@ namespace Data
         /// </summary>
         [Required]
         public User BlamedUser { get; set; }
+        
+        public ulong? DiscordMessage { get; set; }
 
         public Quote()
         {
@@ -36,8 +38,8 @@ namespace Data
             BlamedUser = user ?? other.BlamedUser;
         }
 
-        // TODO: Remove any backticks that don't have closing backticks.
-        public string NormalizeMessage()
+        // TODO: Escape the message contents.
+        public static string NormalizeMessage()
         {
             throw new NotImplementedException();
         }
