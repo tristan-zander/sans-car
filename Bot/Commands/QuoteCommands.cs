@@ -78,7 +78,7 @@ namespace Bot.Commands
                 Guild = guild,
                 Message = quotedText,
                 TimeAdded = DateTimeOffset.UtcNow,
-                BlamedUser = user
+                Owner = user
             };
 
             var entity = await Context.Quotes.AddAsync(quote);
@@ -86,7 +86,7 @@ namespace Bot.Commands
 
             if (guild.EnableQuoteChannel && guild.QuoteChannel != null)
             {
-                var blamedUser = await ctx.Client.GetUserAsync(quote.BlamedUser.Id);
+                var blamedUser = await ctx.Client.GetUserAsync(quote.Owner.Id);
                 var embed = new DiscordEmbedBuilder()
                     .WithColor(DiscordColor.Blue)
                     .WithUrl("https://sanscar.net")
@@ -125,7 +125,7 @@ namespace Bot.Commands
             }
 
             var quotes = Context.Quotes
-                .Include(q => q.BlamedUser)
+                .Include(q => q.Owner)
                 .Include(q => q.Guild)
                 .Where(q => q.Guild.GuildId == ctx.Guild.Id)
                 .OrderByDescending(q => q.TimeAdded)
@@ -141,7 +141,7 @@ namespace Bot.Commands
 
             foreach (var quote in quotes)
             {
-                var user = await ctx.Client.GetUserAsync(quote.BlamedUser.Id);
+                var user = await ctx.Client.GetUserAsync(quote.Owner.Id);
                 output.Append($"```{quote.Message.Replace("`", "")}```{user.Mention} on {quote.TimeAdded:d}\n\n");
             }
 
@@ -192,7 +192,7 @@ namespace Bot.Commands
             // Probably has some poor performance consequences.
             // TODO: See if Postgres has a way to fuzz text
             var possibleQuotes = Context.Quotes
-                .Include(q => q.BlamedUser)
+                .Include(q => q.Owner)
                 .Where(q => q.Guild.GuildId == ctx.Guild.Id)
                 .AsEnumerable()
                 .OrderByDescending(q => Fuzz.WeightedRatio(search, q.Message))
@@ -203,7 +203,7 @@ namespace Bot.Commands
             var bestFuzz = Fuzz.WeightedRatio(search, firstQuote.Message);
             if (bestFuzz > 80)
             {
-                var blamedUser = await ctx.Client.GetUserAsync(firstQuote.BlamedUser.Id);
+                var blamedUser = await ctx.Client.GetUserAsync(firstQuote.Owner.Id);
 
                 // TODO ask to see if the user has permissions to call this command.
                 if (ctx.Message.Author.IsBot || blamedUser != ctx.Message.Author)
@@ -342,7 +342,7 @@ namespace Bot.Commands
                 // Include all objects from other tables like this?
                 var quote = Database.Quotes
                     .Include(i => i.Guild)
-                    .Include(i => i.BlamedUser)
+                    .Include(i => i.Owner)
                     .First(q => q.QuoteId == quoteId);
                 return Task.FromResult(Optional.FromValue(quote));
             }
