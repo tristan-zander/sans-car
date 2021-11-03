@@ -4,8 +4,8 @@ Requires=lavalink.service postgresql.service
 
 [Service]
 # Replace with your system config
-WorkingDirectory=/opt/sans-car/
-ExecStart=/opt/sans-car/deployable/Bot
+WorkingDirectory=/opt/SansCar/
+ExecStart=/usr/bin/dotnet /opt/SansCar/deployable/Bot.dll
 Restart=always
 # Restart service after 10 seconds if the dotnet service crashes:
 RestartSec=10
@@ -14,6 +14,8 @@ SyslogIdentifier=sans-bot
 User=sanscar
 Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
 Environment=DOTNET_CLI_TELEMETRY_OPTOUT=1
+Environment=DOTNET_ENVIRONMENT=Production
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target
+
