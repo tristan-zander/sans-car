@@ -11,11 +11,14 @@ namespace Data
 
         [Required]
         public Guild Guild { get; set; }
-        [Required, MaxLength(500)]
+        [Required, MaxLength(1024)]
         public string Message { get; set; }
 
         [Required]
         public DateTimeOffset TimeAdded { get; set; }
+        
+        [Required]
+        public DateTimeOffset LastUpdated { get; set; }
 
         /// <summary>
         /// The user that submitted the quote.
@@ -23,6 +26,9 @@ namespace Data
         [Required]
         public User BlamedUser { get; set; }
 
+        /// <summary>
+        /// The ID of the Discord Message being referenced
+        /// </summary>
         public ulong? DiscordMessage { get; set; }
 
         public Quote()
