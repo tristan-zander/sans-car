@@ -78,28 +78,31 @@ namespace Bot.Commands
                 Guild = guild,
                 Message = quotedText,
                 TimeAdded = DateTimeOffset.UtcNow,
-                Owner = user
+                Owner = user,
+                DiscordMessage = ctx.Message.Id,
             };
 
             var entity = await Context.Quotes.AddAsync(quote);
             await Context.SaveChangesAsync();
 
+            var blamedUser = await ctx.Client.GetUserAsync(quote.Owner.Id);
+            var blamedMember = await ctx.Guild.GetMemberAsync(quote.Owner.Id);
+            var message = new DiscordEmbedBuilder()
+                .WithColor(DiscordColor.Blue)
+                .WithUrl("https://sanscar.net")
+                .AddField($"{blamedMember.Nickname}", $"{quote.Message}")
+                .WithFooter($"ID: {quote.QuoteId}")
+                .WithTimestamp(quote.TimeAdded)
+                .WithAuthor($"{blamedUser.Username}#{blamedUser.Discriminator}")
+                .Build();
+            // TODO: Move logic to something that listens on pg_notify
             if (guild.EnableQuoteChannel && guild.QuoteChannel != null)
             {
-                var blamedUser = await ctx.Client.GetUserAsync(quote.Owner.Id);
-                var embed = new DiscordEmbedBuilder()
-                    .WithColor(DiscordColor.Blue)
-                    .WithUrl("https://sanscar.net")
-                    .AddField($"{blamedUser.Username}#{blamedUser.Discriminator}", $"{quote.Message}")
-                    .WithFooter($"ID: {quote.QuoteId}")
-                    .WithTimestamp(quote.TimeAdded)
-                    .Build();
                 var channel = await ctx.Client.GetChannelAsync(guild.QuoteChannel.Id);
-                await channel.SendMessageAsync(embed);
+                await channel.SendMessageAsync(message);
             }
 
-            await ctx.RespondAsync($"Successfully added quote: ```{entity.Entity.Message.Replace("`", "")}```\n" +
-                $"ID: {quote.QuoteId}");
+            await ctx.RespondAsync(message);
         }
 
         // TODO add functionality for "sans quote list --show ids"
@@ -156,9 +159,10 @@ namespace Bot.Commands
         }
 
         [Command("remove"), Aliases("delete", "d", "r")]
-        [Description("Remove quote(s) on your server. The search can match a portion of the quote so you don't have to " +
-                     "type it out verbatim.\n" +
-                     "Ex. the quote \"The imposter is sus\" can be found and removed just by typing \"sus\"")]
+        [Description(
+            "Remove quote(s) on your server. The search can match a portion of the quote so you don't have to " +
+            "type it out verbatim.\n" +
+            "Ex. the quote \"The imposter is sus\" can be found and removed just by typing \"sus\"")]
         public async Task RemoveQuote(CommandContext ctx, [RemainingText] string search)
         {
             await ctx.TriggerTypingAsync();
@@ -256,7 +260,8 @@ namespace Bot.Commands
         public async Task Edit(CommandContext ctx,
             [Description("The ID or a text copy of the quote that you want to change.")]
             Quote quote,
-            [RemainingText, Description("The new quote message.")] string newQuoteMessage)
+            [RemainingText, Description("The new quote message.")]
+            string newQuoteMessage)
         {
             await ctx.RespondAsync("Hey, I found your quote!");
         }
@@ -276,6 +281,7 @@ namespace Bot.Commands
                 };
                 await Context.Guilds.AddAsync(guild);
             }
+
             guild.AllowQuotes = false;
 
             await Context.SaveChangesAsync();
@@ -335,6 +341,7 @@ namespace Bot.Commands
     public class QuoteConvertor : IArgumentConverter<Quote>
     {
         public SansDbContext Database { get; init; }
+
         public Task<Optional<Quote>> ConvertAsync(string value, CommandContext ctx)
         {
             if (Guid.TryParse(value, out var quoteId))

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Data.Migrations
@@ -27,17 +28,6 @@ namespace Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_SongQueue", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Users",
-                columns: table => new
-                {
-                    Id = table.Column<decimal>(type: "numeric(20,0)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Users", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -124,9 +114,11 @@ namespace Data.Migrations
                 {
                     QuoteId = table.Column<Guid>(type: "uuid", nullable: false),
                     GuildId = table.Column<decimal>(type: "numeric(20,0)", nullable: false),
-                    Message = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    Message = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
                     TimeAdded = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    BlamedUserId = table.Column<decimal>(type: "numeric(20,0)", nullable: true),
+                    LastUpdated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    PreviouslyModifiedQuotes = table.Column<List<string>>(type: "text[]", nullable: true),
+                    OwnerId = table.Column<decimal>(type: "numeric(20,0)", nullable: true),
                     DiscordMessage = table.Column<decimal>(type: "numeric(20,0)", nullable: true)
                 },
                 constraints: table =>
@@ -138,11 +130,23 @@ namespace Data.Migrations
                         principalTable: "Guilds",
                         principalColumn: "GuildId",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Users",
+                columns: table => new
+                {
+                    Id = table.Column<decimal>(type: "numeric(20,0)", nullable: false),
+                    QuoteId = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Users", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Quote_Users_BlamedUserId",
-                        column: x => x.BlamedUserId,
-                        principalTable: "Users",
-                        principalColumn: "Id",
+                        name: "FK_Users_Quote_QuoteId",
+                        column: x => x.QuoteId,
+                        principalTable: "Quote",
+                        principalColumn: "QuoteId",
                         onDelete: ReferentialAction.Restrict);
                 });
 
@@ -167,28 +171,71 @@ namespace Data.Migrations
                 column: "QuoteChannelId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Quote_BlamedUserId",
-                table: "Quote",
-                column: "BlamedUserId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Quote_GuildId",
                 table: "Quote",
                 column: "GuildId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Quote_OwnerId",
+                table: "Quote",
+                column: "OwnerId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Song_SongQueueId",
                 table: "Song",
                 column: "SongQueueId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_QuoteId",
+                table: "Users",
+                column: "QuoteId");
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_Quote_Users_OwnerId",
+                table: "Quote",
+                column: "OwnerId",
+                principalTable: "Users",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Restrict);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "Quote");
+            migrationBuilder.DropForeignKey(
+                name: "FK_AudioPlayer_Channels_VoiceChannelId",
+                table: "AudioPlayer");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_Guilds_Channels_QuoteChannelId",
+                table: "Guilds");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_AudioPlayer_SongQueue_SongQueueId",
+                table: "AudioPlayer");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_Guilds_AudioPlayer_AudioPlayerId",
+                table: "Guilds");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_Quote_Guilds_GuildId",
+                table: "Quote");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_Quote_Users_OwnerId",
+                table: "Quote");
 
             migrationBuilder.DropTable(
                 name: "Song");
+
+            migrationBuilder.DropTable(
+                name: "Channels");
+
+            migrationBuilder.DropTable(
+                name: "SongQueue");
+
+            migrationBuilder.DropTable(
+                name: "AudioPlayer");
 
             migrationBuilder.DropTable(
                 name: "Guilds");
@@ -197,13 +244,7 @@ namespace Data.Migrations
                 name: "Users");
 
             migrationBuilder.DropTable(
-                name: "AudioPlayer");
-
-            migrationBuilder.DropTable(
-                name: "Channels");
-
-            migrationBuilder.DropTable(
-                name: "SongQueue");
+                name: "Quote");
         }
     }
 }
