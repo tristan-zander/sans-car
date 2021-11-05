@@ -13,6 +13,7 @@ using DSharpPlus.Interactivity.Enums;
 using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.Lavalink;
 using DSharpPlus.Net;
+using DSharpPlus.SlashCommands;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -84,6 +85,13 @@ namespace Bot
                     Services = services
                 });
 
+            var slashConf = new SlashCommandsConfiguration
+            {
+                Services = services
+            };
+            var slashExt = await bot.UseSlashCommandsAsync(slashConf);
+            slashExt.RegisterCommands<SlashCommands>();
+
             foreach (var shard in bot.ShardClients.Keys)
             {
                 commands[shard]?.RegisterCommands(Assembly.GetExecutingAssembly());
@@ -94,49 +102,53 @@ namespace Bot
                     }
                 );
 
+                slashExt[shard].SlashCommandErrored += (sender, eventArgs) =>
+                {
+                    bot.Logger.LogError(eventArgs.Exception, "Slash command failed");
+                    return Task.CompletedTask;
+                };
+
                 #region OnCommandError
 
                 commands[shard].CommandErrored += async (ev, arg) =>
                 {
-
-
                     switch (arg.Exception)
                     {
                         case CommandNotFoundException or ArgumentException:
                             return;
                         case DbUpdateConcurrencyException e:
+                        {
+                            foreach (var entry in e.Entries)
                             {
-                                foreach (var entry in e.Entries)
+                                var proposedValues = entry.CurrentValues;
+                                var databaseValues = await entry.GetDatabaseValuesAsync();
+
+                                if (databaseValues == null)
                                 {
-                                    var proposedValues = entry.CurrentValues;
-                                    var databaseValues = await entry.GetDatabaseValuesAsync();
+                                    // We probably did an update with a Database entry that doesn't exist here.
+                                    entry.OriginalValues.SetValues(proposedValues);
 
-                                    if (databaseValues == null)
-                                    {
-                                        // We probably did an update with a database entry that doesn't exist here.
-                                        entry.OriginalValues.SetValues(proposedValues);
-
-                                        continue;
-                                    }
-
-                                    // Otherwise prioritize the database values.
-                                    entry.OriginalValues.SetValues(databaseValues);
+                                    continue;
                                 }
 
-                                await dbContext.SaveChangesAsync();
-                                break;
+                                // Otherwise prioritize the Database values.
+                                entry.OriginalValues.SetValues(databaseValues);
                             }
+
+                            await dbContext.SaveChangesAsync();
+                            break;
+                        }
                     }
 
                     bot.Logger.LogError(arg.Exception, "CommandsNext command failed");
 
-                    // TODO: Send the exception to the database.
+                    // TODO: Send the exception to the Database.
 
-                    await arg.Context.RespondAsync($"The bot ran into an error while trying to execute your command.\n```{arg.Exception.Message}```");
+                    await arg.Context.RespondAsync(
+                        $"The bot ran into an error while trying to execute your command.\n```{arg.Exception.Message}```");
                 };
 
                 #endregion
-
             }
 
             var searchCommands = new SearchCommands(bot.Logger, dbContext);

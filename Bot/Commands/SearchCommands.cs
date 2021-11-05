@@ -77,7 +77,7 @@ namespace Bot.Commands
                 {
                     await _commands[commName].Execute(sender, args);
                 }
-                // TODO: Send this to the database for auditing. Look into Serilog or just put it on the database.
+                // TODO: Send this to the Database for auditing. Look into Serilog or just put it on the Database.
                 catch (Exception e)
                 {
                     Logger.LogError(e, "Failed to execute command {Command}", commName);

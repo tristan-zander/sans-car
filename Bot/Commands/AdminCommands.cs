@@ -57,7 +57,7 @@ namespace Bot.Commands
 
         [Command("toggle-quotes"), Aliases("qtoggle")]
         [Description("Toggles whether quotes can be used by normal users in your server. Remaining quotes will exist" +
-                     "in the database regardless.")]
+                     "in the Database regardless.")]
         public async Task ToggleQuotes(CommandContext ctx)
         {
             var guild = await Context.Guilds.FindAsync(ctx.Guild.Id);
@@ -80,7 +80,7 @@ namespace Bot.Commands
 
         // This command explicitly must be executed by the owner so bad admins can't wipe server data.
         [Command("delete-quotes"), Aliases("qdelete"), RequireOwner]
-        [Description("(Unimplemented) Delete all quotes for your server. Quotes will remain in the database for a " +
+        [Description("(Unimplemented) Delete all quotes for your server. Quotes will remain in the Database for a " +
                      "certain period of time before being deleted but will be unable to be accessed.")]
         public async Task DeleteQuotes(CommandContext ctx)
         {
