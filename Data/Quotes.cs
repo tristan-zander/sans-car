@@ -7,7 +7,7 @@ namespace Data
 {
     public class Quote
     {
-        [Key] public Guid QuoteId { get; set; } = Guid.NewGuid();
+        [Key] public Guid QuoteId { get; } = Guid.NewGuid();
 
         /// <summary>
         /// The guild that the quote belongs to.

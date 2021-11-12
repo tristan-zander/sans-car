@@ -9,6 +9,9 @@ namespace Data
     {
         [Key]
         public ulong GuildId { get; set; }
+        
+        [Required]
+        public bool HasAgreedToToS { get; set; }
 
         /// <summary>
         /// Enables the usage of commands that can appear any time in a search, such as "sans car" or "kylo ren"
