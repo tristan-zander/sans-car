@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,14 +12,21 @@ using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.SlashCommands;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using DiscordUser = Data.DiscordUser;
 
 namespace Bot.Commands
 {
     public class SlashCommands : ApplicationCommandModule
     {
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
-        public SansDbContext Database { private get; set; }
-        public ILogger<SlashCommands> Logger { private get; set; }
+        public SansDbContext Database { private get; init; }
+        public ILogger<SlashCommands> Logger { private get; init; }
+
+        public SlashCommands(SansDbContext database, ILogger<SlashCommands> logger)
+        {
+            Database = database;
+            Logger = logger;
+        }
 
         [ContextMenu(ApplicationCommandType.MessageContextMenu, "Add Quote")]
         public async Task AddQuoteFromDiscordMessage(ContextMenuContext ctx)
@@ -38,10 +46,16 @@ namespace Bot.Commands
             public SansDbContext Database { private get; set; }
             public ILogger<QuoteSlashCommands> Logger { private get; set; }
 
+            public QuoteSlashCommands(SansDbContext database, ILogger<QuoteSlashCommands> logger)
+            {
+                Logger = logger;
+                Database = database;
+            }
+
             [SlashCommand("add", "Add a quote to your guild.")]
             private async Task AddQuoteFull(InteractionContext ctx,
                 [Option("author", "The user that authored this quote,")]
-                DiscordUser mention,
+                DSharpPlus.Entities.DiscordUser mention,
                 [Option("quote", "The quote that you would like to add.")]
                 string quotedText)
             {
@@ -54,17 +68,8 @@ namespace Bot.Commands
                     return;
                 }
 
-                try
-                {
-                    await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                        new DiscordInteractionResponseBuilder().AddEmbed(message));
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                    await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                        new DiscordInteractionResponseBuilder().WithContent(e.Message));
-                }
+                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                    new DiscordInteractionResponseBuilder().AddEmbed(message));
             }
 
 
@@ -72,7 +77,8 @@ namespace Bot.Commands
             // Might be useful for reporting quotes or removing them on masse
             [SlashCommand("list", "Get a paginated list of quotes.")]
             [Description("List quotes from the server in an interactive fashion.")]
-            public async Task ListQuotes(InteractionContext ctx)
+            public async Task ListQuotes(InteractionContext ctx, 
+                [Option("search", "Searches for quotes with similar text.")] string search = "")
             {
                 var guild = await Database.Guilds.FindAsync(ctx.Guild.Id);
 
@@ -121,26 +127,19 @@ namespace Bot.Commands
                 var embedBuilder = new DiscordEmbedBuilder().WithColor(DiscordColor.Blue);
                 var interact = ctx.Client.GetInteractivity();
                 var pages = interact.GeneratePagesInEmbed(output.ToString(), SplitType.Line, embedBuilder);
-               
-                // TODO: Get the interactivity extension and do all of this manually.
-                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                    new DiscordInteractionResponseBuilder().AsEphemeral(true).WithContent("Sending it now."));
-                await ctx.Channel.SendPaginatedMessageAsync(ctx.Member, pages, PaginationBehaviour.WrapAround,
-                    ButtonPaginationBehavior.DeleteMessage);
+
+                await interact.SendPaginatedResponseAsync(ctx.Interaction,
+                    true, ctx.User, pages, behaviour: PaginationBehaviour.WrapAround,
+                    deletion: ButtonPaginationBehavior.DeleteMessage);
+                
+                
             }
         }
 
 
         private static async ValueTask<DiscordEmbed> GetQuote(SansDbContext database, BaseContext ctx,
-            DiscordUser mention, string quotedText)
+            DSharpPlus.Entities.DiscordUser? mention, string quotedText)
         {
-            var user = await database.Users.FindAsync(mention.Id);
-            if (user == null)
-            {
-                user = new User(mention);
-                await database.Users.AddAsync(user);
-            }
-
             var guild = await database.Guilds
                 .Include(g => g.QuoteChannel)
                 .SingleOrDefaultAsync(g => g.GuildId == ctx.Guild.Id);
@@ -166,7 +165,10 @@ namespace Bot.Commands
                 Guild = guild,
                 Message = quotedText,
                 TimeAdded = DateTimeOffset.UtcNow,
-                Owner = user,
+                Owner = new DiscordUser
+                {
+                    Id = mention?.Id ?? ctx.Member.Id
+                },
             };
 
             var entity = await database.Quotes.AddAsync(quote);
@@ -177,7 +179,7 @@ namespace Bot.Commands
                 .WithColor(DiscordColor.Blue)
                 .WithUrl("https://sanscar.net")
                 .AddField($"{blamedMember.Nickname ?? blamedMember.Username}", $"{quote.Message}")
-                .WithFooter($"ID: {quote.QuoteId:N}")
+                .WithFooter($"ID: {quote.Id:N}")
                 .WithTimestamp(quote.TimeAdded)
                 .WithAuthor($"{blamedMember.Username}#{blamedMember.Discriminator}")
                 .Build();

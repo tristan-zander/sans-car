@@ -8,6 +8,7 @@ using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using DiscordChannel = Data.DiscordChannel;
 
 namespace Bot.Commands
 {
@@ -97,13 +98,13 @@ namespace Bot.Commands
 
         [Command("set-quote-channel"), Aliases("qcset")]
         [Description("Set the channel to which quotes will be posted whenever someone adds one.")]
-        public async Task SetQuoteChannel(CommandContext ctx, DiscordChannel chan)
+        public async Task SetQuoteChannel(CommandContext ctx, DSharpPlus.Entities.DiscordChannel chan)
         {
 
             var channel = await Context.Channels.FindAsync(chan.Id);
             if (channel == null)
             {
-                channel = new Channel
+                channel = new DiscordChannel
                 {
                     Id = chan.Id
                 };
