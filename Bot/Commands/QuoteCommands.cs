@@ -270,17 +270,13 @@ namespace Bot.Commands
 
         public Task<Optional<Quote>> ConvertAsync(string value, CommandContext ctx)
         {
-            if (Guid.TryParse(value, out var quoteId))
-            {
-                // Include all objects from other tables like this?
-                var quote = Database.Quotes
-                    .Include(i => i.Guild)
-                    .Include(i => i.Owner)
-                    .First(q => q.QuoteId == quoteId);
-                return Task.FromResult(Optional.FromValue(quote));
-            }
-
-            return Task.FromResult(Optional.FromNoValue<Quote>());
+            if (!Guid.TryParse(value, out var quoteId)) return Task.FromResult(Optional.FromNoValue<Quote>());
+            // Include all objects from other tables like this?
+            var quote = Database.Quotes
+                .Include(i => i.Guild)
+                .Include(i => i.Owner)
+                .First(q => q.QuoteId == quoteId);
+            return Task.FromResult(quote == null ? Optional.FromNoValue<Quote>() : Optional.FromValue(quote));
         }
     }
 }
