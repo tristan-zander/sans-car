@@ -5,7 +5,7 @@ using DSharpPlus.Entities;
 
 namespace Data
 {
-    public class Channel
+    public class DiscordChannel
     {
         [Key] public ulong Id { get; set; }
     }

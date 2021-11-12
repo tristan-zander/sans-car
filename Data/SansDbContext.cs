@@ -1,20 +1,20 @@
 using System;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Data
 {
-    public class SansDbContext : DbContext
+    public class SansDbContext : IdentityDbContext
     {
         private string ConnectionString { get; }
 
         public DbSet<Guild> Guilds { get; set; }
-        public DbSet<Channel> Channels { get; set; }
-        public DbSet<User> Users { get; set; }
+        public DbSet<DiscordChannel> Channels { get; set; }
         public DbSet<Quote> Quotes { get; set; }
-        public DbSet<Quote> QuotesToPublish { get; set; }
 
         public SansDbContext()
         {
+            // TODO: remove this before 2.0
             ConnectionString = "Host=localhost;Database=sans_car;";
         }
 

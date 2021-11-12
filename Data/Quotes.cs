@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using DSharpPlus.Entities;
+using Microsoft.AspNetCore.Identity;
 
 namespace Data
 {
     public class Quote
     {
-        [Key] public Guid QuoteId { get; } = Guid.NewGuid();
+        [Key] public Guid Id { get; set; } = Guid.NewGuid();
 
         /// <summary>
         /// The guild that the quote belongs to.
@@ -20,7 +21,7 @@ namespace Data
         /// <summary>
         /// A list of people that are attributed to the quote.
         /// </summary>
-        public List<User> Mentions { get; set; }
+        public List<DiscordUser> Mentions { get; set; } = new List<DiscordUser>();
 
         [Required] public DateTimeOffset TimeAdded { get; set; }
 
@@ -32,13 +33,17 @@ namespace Data
         /// <summary>
         /// Store old revisions of quotes that were modified.
         /// </summary>
-        public List<string> PreviouslyModifiedQuotes { get; set; }
+        public List<string> PreviouslyModifiedQuotes { get; set; } = new List<string>();
 
         /// <summary>
-        /// The user that submitted (owns) the quote.
+        /// The user's discord Id that submitted (owns) the quote.
         /// </summary>
         [Required]
-        public User Owner { get; set; }
+        public DiscordUser Owner { get; set; }
+
+#nullable enable
+        public IdentityUser? OwnerAccount { get; set; }
+#nullable disable
 
         /// <summary>
         /// The ID of the Discord Message being referenced

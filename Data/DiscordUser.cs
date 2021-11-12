@@ -6,21 +6,25 @@ using DSharpPlus.Net;
 
 namespace Data
 {
-    public class User
+    public class DiscordUser
     {
         /// <summary>
         /// Analogous to the Discord user's ID snowflake.
         /// </summary>
         [Key] public ulong Id { get; init; }
 
-        public User(DiscordUser user)
+        public DiscordUser(DSharpPlus.Entities.DiscordUser user)
         {
             Id = user.Id;
         }
 
-        public User(ulong id)
+        public DiscordUser(ulong id)
         {
             Id = id;
+        }
+
+        public DiscordUser()
+        {
         }
     }
 }
