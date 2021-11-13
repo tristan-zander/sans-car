@@ -19,9 +19,9 @@ namespace Data
         [Required, MaxLength(1024)] public string Message { get; set; }
 
         /// <summary>
-        /// A list of people that are attributed to the quote.
+        /// A list of people that are attributed to the quote. List is Ids of SnowflakeObjects.
         /// </summary>
-        public List<DiscordUser> Mentions { get; set; } = new List<DiscordUser>();
+        public List<ulong> Mentions { get; set; } = new();
 
         [Required] public DateTimeOffset TimeAdded { get; set; }
 

@@ -15,9 +15,11 @@ using DSharpPlus.Lavalink;
 using DSharpPlus.Net;
 using DSharpPlus.SlashCommands;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Configuration;
 using LavalinkConfiguration = DSharpPlus.Lavalink.LavalinkConfiguration;
 
 namespace Bot
@@ -73,7 +75,13 @@ namespace Bot
             var dbContext = new SansDbContext(config["Database:ConnectionString"]);
 
             var services = new ServiceCollection()
-                .AddLogging()
+                .AddLogging(loggingOptions =>
+                {
+                    // yyyy-MM-dd HH:mm:ss zzz
+                    loggingOptions.SetMinimumLevel(LogLevel.Debug);
+                    loggingOptions.AddConsole();
+                    loggingOptions.AddConfiguration(config);
+                })
                 .AddSingleton(dbContext)
                 .BuildServiceProvider();
 
@@ -91,6 +99,7 @@ namespace Bot
             };
             var slashExt = await bot.UseSlashCommandsAsync(slashConf);
             slashExt.RegisterCommands<SlashCommands>();
+            slashExt.RegisterCommands<QuoteCommands>();
 
             foreach (var shard in bot.ShardClients.Keys)
             {
@@ -117,27 +126,27 @@ namespace Bot
                         case CommandNotFoundException or ArgumentException:
                             return;
                         case DbUpdateConcurrencyException e:
-                        {
-                            foreach (var entry in e.Entries)
                             {
-                                var proposedValues = entry.CurrentValues;
-                                var databaseValues = await entry.GetDatabaseValuesAsync();
-
-                                if (databaseValues == null)
+                                foreach (var entry in e.Entries)
                                 {
-                                    // We probably did an update with a Database entry that doesn't exist here.
-                                    entry.OriginalValues.SetValues(proposedValues);
+                                    var proposedValues = entry.CurrentValues;
+                                    var databaseValues = await entry.GetDatabaseValuesAsync();
 
-                                    continue;
+                                    if (databaseValues == null)
+                                    {
+                                        // We probably did an update with a Database entry that doesn't exist here.
+                                        entry.OriginalValues.SetValues(proposedValues);
+
+                                        continue;
+                                    }
+
+                                    // Otherwise prioritize the Database values.
+                                    entry.OriginalValues.SetValues(databaseValues);
                                 }
 
-                                // Otherwise prioritize the Database values.
-                                entry.OriginalValues.SetValues(databaseValues);
+                                await dbContext.SaveChangesAsync();
+                                break;
                             }
-
-                            await dbContext.SaveChangesAsync();
-                            break;
-                        }
                     }
 
                     bot.Logger.LogError(arg.Exception, "CommandsNext command failed");

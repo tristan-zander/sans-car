@@ -11,258 +11,202 @@ using DSharpPlus.Entities;
 using DSharpPlus.Interactivity.Enums;
 using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.SlashCommands;
-using FuzzySharp;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using DiscordUser = Data.DiscordUser;
 
 namespace Bot.Commands
 {
     // TODO: make sure that admins can execute quote commands regardless of whether it's enabled or not.
-        [Group("quote"), Aliases("q", "quotes", "quo")]
-        [Description("Manage quotes from your server. Quotes can be listed at any time or posted to specific channels.")]
-        public class QuoteCommands : ApplicationCommandModule
+    [Group("quote"), Aliases("q", "quotes", "quo")]
+    [Description("Manage quotes from your server. Quotes can be listed at any time or posted to specific channels.")]
+    public class QuoteCommands : ApplicationCommandModule
+    {
+        private SansDbContext Database { get; set; }
+        private ILogger<QuoteCommands> Logger { get; set; }
+
+        public QuoteCommands(SansDbContext database, ILogger<QuoteCommands> logger)
         {
-            private SansDbContext Database { get; }
-            private ILogger<QuoteCommands> Logger { get; }
-    
-            public QuoteCommands(SansDbContext database, ILogger<QuoteCommands> logger)
+            Database = database;
+            Logger = logger;
+        }
+
+        [ContextMenu(ApplicationCommandType.MessageContextMenu, "Add Quote")]
+        // ReSharper disable once UnusedMember.Global
+        public async Task AddQuoteFromDiscordMessage(ContextMenuContext ctx)
+        {
+            await ctx.CreateResponseAsync(InteractionResponseType.DeferredMessageUpdate,
+                new DiscordInteractionResponseBuilder());
+
+            var message = await GetQuote(Database, ctx, ctx.TargetMessage.Author, ctx.TargetMessage.Content);
+
+            await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                new DiscordInteractionResponseBuilder().AddEmbed(message));
+        }
+
+        [SlashCommandGroup("quote", "Add and manage quotes for your server.")]
+        // ReSharper disable once UnusedType.Global
+        public class QuoteSlashCommands : ApplicationCommandModule
+        {
+            public SansDbContext Database { private get; set; }
+            public ILogger<QuoteSlashCommands> Logger { private get; set; }
+
+            public QuoteSlashCommands(SansDbContext database, ILogger<QuoteSlashCommands> logger)
             {
-                Database = database;
                 Logger = logger;
+                Database = database;
             }
-    
+
+            [SlashCommand("add", "Add a quote to your guild.")]
+            private async Task AddQuote(InteractionContext ctx,
+                [Option("author", "The user that authored this quote,")]
+                DSharpPlus.Entities.DiscordUser mention,
+                [Option("quote", "The quote that you would like to add.")]
+                string quotedText)
+            {
+                Logger.LogInformation("Running slash command");
+
+                var message = await GetQuote(Database, ctx, mention, quotedText);
+
+                if (message == null)
+                {
+                    return;
+                }
+
+                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                    new DiscordInteractionResponseBuilder().AddEmbed(message));
+            }
+
+
             // TODO add functionality for "sans quote list --show ids"
             // Might be useful for reporting quotes or removing them on masse
-            [Command("list"), Aliases("l")]
+            [SlashCommand("list", "Get a paginated list of quotes.")]
             [Description("List quotes from the server in an interactive fashion.")]
-            public async Task ListQuotes(CommandContext ctx)
+            public async Task ListQuotes(InteractionContext ctx,
+                [Option("search", "Searches for quotes with similar text.")] string search = "", 
+                [Option("starting_from", "Only show quotes made before this date.")] string from = null,
+                [Option("stopping_at", "Only show quotes made after this date.")] string to = null,
+                [Option("mentions", "Show only quotes from this user.")] SnowflakeObject user = null)
             {
-                await ctx.TriggerTypingAsync();
-    
                 var guild = await Database.Guilds.FindAsync(ctx.Guild.Id);
-    
+
                 if (guild == null)
                 {
-                    await ctx.RespondAsync("There are no quotes in this server! Use \"sans quote add\" to add a quote.");
+                    await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                        new DiscordInteractionResponseBuilder().WithContent(
+                            "There are no quotes in this server! Use \"sans quote add\" to add a quote."));
                     return;
                 }
-    
+
                 if (guild.AllowQuotes != true)
                 {
-                    await ctx.RespondAsync("Sorry, quotes aren't enabled in this server.");
+                    await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                        new DiscordInteractionResponseBuilder().WithContent(
+                            "Sorry, quotes aren't enabled in this server."));
                     return;
                 }
-    
-                var quotes = Database.Quotes
-                    .Include(q => q.Owner)
+
+                var useFromDate = DateTimeOffset.TryParse(from, out var dateFrom);
+                var useToDate = DateTimeOffset.TryParse(to, out var dateTo);
+                var useMentions = user != null;
+
+                var query = Database.Quotes
                     .Include(q => q.Guild)
-                    .Where(q => q.Guild.GuildId == ctx.Guild.Id)
+                    .Where(q => q.Guild.GuildId == ctx.Guild.Id
+                                && (!useFromDate || q.TimeAdded <= dateFrom)
+                                && (!useToDate || q.TimeAdded >= dateTo)
+                                && (!useMentions || q.Mentions.Contains(user.Id)));
+                
+                Logger.LogDebug("Query for `quote list`: {}", query.ToQueryString());
+                
+                var quotes = query
                     .OrderByDescending(q => q.TimeAdded)
                     .Take(50).ToList();
-    
+
                 if (quotes.Count <= 0)
                 {
-                    await ctx.RespondAsync("Looks like you don't have any quotes on this server yet :(");
+                    await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                        new DiscordInteractionResponseBuilder().WithContent(
+                            "I couldn't find any quotes that matched. Are you being too specific?"));
                     return;
                 }
-    
+
                 var output = new StringBuilder();
-    
+
                 foreach (var quote in quotes)
                 {
-                    var user = await ctx.Client.GetUserAsync(quote.Owner.Id);
-                    output.Append($"```{quote.Message.Replace("`", "")}```{user.Mention} on {quote.TimeAdded:d}\n\n");
+                    var quoteUser = await ctx.Client.GetUserAsync(quote.Owner);
+                    output.Append($"```{quote.Message.Replace("`", "")}```{quoteUser.Mention} on {quote.TimeAdded:d}\n\n");
                 }
-    
+
                 // remove the final 2 endlines.
                 output.Remove(output.Length - 2, 2);
-    
+
                 var embedBuilder = new DiscordEmbedBuilder().WithColor(DiscordColor.Blue);
                 var interact = ctx.Client.GetInteractivity();
                 var pages = interact.GeneratePagesInEmbed(output.ToString(), SplitType.Line, embedBuilder);
-    
-                await ctx.Channel.SendPaginatedMessageAsync(ctx.Member, pages);
-            }
-    
-            [Command("remove"), Aliases("delete", "d", "r")]
-            [Description(
-                "Remove quote(s) on your server. The search can match a portion of the quote so you don't have to " +
-                "type it out verbatim.\n" +
-                "Ex. the quote \"The imposter is sus\" can be found and removed just by typing \"sus\"")]
-            public async Task RemoveQuote(CommandContext ctx, [RemainingText] string search)
-            {
-                await ctx.TriggerTypingAsync();
-    
-                if (await CheckQuoteAvailability(ctx) != true)
-                {
-                    return;
-                }
-    
-                var guild = await Database.Guilds.FindAsync(ctx.Guild.Id);
-    
-                if (guild == null)
-                {
-                    await ctx.RespondAsync("There are no quotes in this server! Use \"sans quote add\" to add a quote.");
-                    return;
-                }
-    
-                if (guild.AllowQuotes != true)
-                {
-                    await ctx.RespondAsync("Sorry, quotes aren't enabled in this server.");
-                    return;
-                }
-    
-                if (search.Length <= 0)
-                {
-                    await ctx.RespondAsync("Usage: \"sans quote remove [quote message]\".");
-                    return;
-                }
-    
-                // Has to pull in every quote from the Database into memory iirc
-                // Probably has some poor performance consequences.
-                // TODO: See if Postgres has a way to fuzz text
-                var possibleQuotes = Database.Quotes
-                    .Include(q => q.Owner)
-                    .Where(q => q.Guild.GuildId == ctx.Guild.Id)
-                    .AsEnumerable()
-                    .OrderByDescending(q => Fuzz.WeightedRatio(search, q.Message))
-                    .Take(3)
-                    .ToList();
-    
-                var firstQuote = possibleQuotes.First();
-                var bestFuzz = Fuzz.WeightedRatio(search, firstQuote.Message);
-                if (bestFuzz > 80)
-                {
-                    var blamedUser = await ctx.Client.GetUserAsync(firstQuote.Owner.Id);
-    
-                    // TODO ask to see if the user has permissions to call this command.
-                    if (ctx.Message.Author.IsBot || blamedUser != ctx.Message.Author)
-                    {
-                        await ctx.RespondAsync("You do not have permission to remove quotes that are not yours.");
-                    }
-    
-                    var embed = new DiscordEmbedBuilder().WithDescription(
-                            "Are you sure this is the message that you want to delete?")
-                        .AddField(blamedUser.Mention ?? "Unknown user", $"```{firstQuote.Message}```")
-                        .Build();
-    
-                    var msg = await ctx.RespondAsync(embed);
-    
-                    var emoji = DiscordEmoji.FromName(ctx.Client, ":white_check_mark:");
-                    await msg.CreateReactionAsync(emoji);
-    
-                    // TODO: put an explicit time limit on this.
-                    var reactionRes = await msg.WaitForReactionAsync(ctx.Message.Author, emoji);
-    
-                    if (!reactionRes.TimedOut)
-                    {
-                        Database.Quotes.Remove(firstQuote);
-                        await Database.SaveChangesAsync();
-    
-                        var modifiedEmbed = new DiscordEmbedBuilder(embed)
-                            .WithDescription("Okay! The quote has been deleted.").ClearFields().Build();
-                        await msg.ModifyAsync(modifiedEmbed);
-                    }
-    
-                    // ERROR: Throws 403
-                    await msg.DeleteAllReactionsAsync("User has reached a decision on quote removal.");
-                }
-                else
-                {
-                    // TODO: give this option a place to actually remove options.
-                    var builder = new StringBuilder();
-    
-                    foreach (var quote in possibleQuotes)
-                    {
-                        var ratio = Fuzz.WeightedRatio(search, quote.Message);
-                        builder.AppendLine($"Fuzz level: {ratio}, Message: ```{quote.Message}```");
-                    }
-    
-                    await ctx.RespondAsync(builder.ToString());
-                }
-            }
-    
-            [Command, Description("Edit a previously added quote.")]
-            public async Task Edit(CommandContext ctx,
-                [Description("The ID or a text copy of the quote that you want to change.")]
-                Quote quote,
-                [RemainingText, Description("The new quote message.")]
-                string newQuoteMessage)
-            {
-                await ctx.RespondAsync("Hey, I found your quote!");
-            }
-    
-    
-            [Command("disable"), RequireOwner]
-            [Description("Disables whether regular users can use the quotes feature.")]
-            public async Task DisableQuotes(CommandContext ctx)
-            {
-                var guild = await Database.Guilds.FindAsync(ctx.Guild.Id);
-                if (guild == null)
-                {
-                    guild = new Guild
-                    {
-                        GuildId = ctx.Guild.Id,
-                        AllowQuotes = true,
-                    };
-                    await Database.Guilds.AddAsync(guild);
-                }
-    
-                guild.AllowQuotes = false;
-    
-                await Database.SaveChangesAsync();
-    
-                await ctx.RespondAsync("Disabling quotes (existing quotes will not be deleted).");
-            }
-    
-            [Command("enable"), RequireOwner]
-            [Description("Enables the quotes feature for regular users.")]
-            public async Task EnableQuotes(CommandContext ctx)
-            {
-                var guild = await Database.Guilds.FindAsync(ctx.Guild.Id);
-                if (guild == null)
-                {
-                    guild = new Guild
-                    {
-                        GuildId = ctx.Guild.Id,
-                        AllowQuotes = true,
-                    };
-                    await Database.Guilds.AddAsync(guild);
-                }
-    
-                guild.AllowQuotes = true;
-    
-                await Database.SaveChangesAsync();
-    
-                await ctx.RespondAsync("Enabling quotes feature.");
-            }
-    
-            // TODO: Phase this out. Enums would be a better way of dealing with this.
-            /// <summary>
-            /// Checks whether or not the server/user can execute quote commands. Note: This function also handles replying
-            /// to the user (so don't do it twice).
-            /// </summary>
-            /// <param name="ctx">The parent command's command Database</param>
-            /// <returns>Whether or not the guild is allowed to use quotes or already has quotes.</returns>
-            private async ValueTask<bool> CheckQuoteAvailability(CommandContext ctx)
-            {
-                var dbGuild = await Database.Guilds.FindAsync(ctx.Guild.Id);
-    
-                if (dbGuild == null)
-                {
-                    await ctx.RespondAsync("There are no quotes in this server! Use \"sans quote add\" to add a quote.");
-                    return false;
-                }
-    
-                if (dbGuild.AllowQuotes != true)
-                {
-                    await ctx.RespondAsync("Sorry, quotes aren't enabled in this server.");
-                    return false;
-                }
-    
-                return true;
+
+                await interact.SendPaginatedResponseAsync(ctx.Interaction,
+                    true, ctx.User, pages, behaviour: PaginationBehaviour.WrapAround,
+                    deletion: ButtonPaginationBehavior.DeleteMessage);
             }
         }
+
+
+        private static async ValueTask<DiscordEmbed> GetQuote(SansDbContext database, BaseContext ctx,
+            SnowflakeObject mention, string quotedText)
+        {
+            var guild = await database.Guilds
+                .Include(g => g.QuoteChannel)
+                .SingleOrDefaultAsync(g => g.GuildId == ctx.Guild.Id);
+
+            if (guild == null)
+            {
+                guild = new Guild
+                {
+                    GuildId = ctx.Guild.Id
+                };
+                await database.AddAsync(guild);
+            }
+
+            if (guild.AllowQuotes != true)
+            {
+                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                    new DiscordInteractionResponseBuilder().WithContent("Quotes are not enabled on this server."));
+                return null;
+            }
+            
+            var quote = new Quote
+            {
+                Guild = guild,
+                Message = quotedText,
+                TimeAdded = DateTimeOffset.UtcNow,
+                Owner = mention?.Id ?? ctx.Member.Id
+            };
+
+            var entity = await database.Quotes.AddAsync(quote);
+            await database.SaveChangesAsync();
+
+            var blamedMember = await ctx.Guild.GetMemberAsync(quote.Owner);
+            var message = new DiscordEmbedBuilder()
+                .WithColor(DiscordColor.Blue)
+                .WithUrl("https://sanscar.net")
+                .AddField($"{blamedMember.Nickname ?? blamedMember.Username}", $"{quote.Message}")
+                .WithFooter($"ID: {quote.Id:N}")
+                .WithTimestamp(quote.TimeAdded)
+                .WithAuthor($"{blamedMember.Username}#{blamedMember.Discriminator}")
+                .Build();
+
+            // TODO: Move logic to something that listens on pg_notify
+            if (guild.EnableQuoteChannel && guild.QuoteChannel != null)
+            {
+                var channel = await ctx.Client.GetChannelAsync(guild.QuoteChannel.Id);
+                await channel.SendMessageAsync(message);
+            }
+
+            return message;
+        }
+    }
 
     public class QuoteConvertor : IArgumentConverter<Quote>
     {
