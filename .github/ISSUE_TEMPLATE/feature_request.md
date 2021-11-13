@@ -7,10 +7,7 @@ assignees: ''
 
 ---
 
-### Applicable Solutions
-- [ ] Bot
-- [ ] Data
-- [ ] Website
+**Is your feature applicable to a specific solution? Please place it in the title where it currently says "Feature"**
 
 ### Description
 **Is your feature request related to a problem? Please describe.**
