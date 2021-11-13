@@ -116,12 +116,6 @@ namespace Bot
             foreach (var shard in bot.ShardClients.Keys)
             {
                 commands[shard]?.RegisterCommands(Assembly.GetExecutingAssembly());
-                commands[shard]?.RegisterConverter(
-                    new QuoteConvertor
-                    {
-                        Database = new SansDbContext(config["Database:ConnectionString"])
-                    }
-                );
 
                 slashExt[shard].SlashCommandErrored += (sender, eventArgs) =>
                 {

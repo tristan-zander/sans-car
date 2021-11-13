@@ -39,7 +39,7 @@ namespace Bot.Commands
             await ctx.CreateResponseAsync(InteractionResponseType.DeferredMessageUpdate,
                 new DiscordInteractionResponseBuilder());
 
-            var message = await GetQuote(Database, ctx, ctx.TargetMessage.Author, ctx.TargetMessage.Content);
+            var message = await InsertQuote(Database, ctx, ctx.TargetMessage.Author, ctx.TargetMessage.Content);
 
             await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
                 new DiscordInteractionResponseBuilder().AddEmbed(message));
@@ -67,7 +67,7 @@ namespace Bot.Commands
             {
                 Logger.LogInformation("Running slash command");
 
-                var message = await GetQuote(Database, ctx, mention, quotedText);
+                var message = await InsertQuote(Database, ctx, mention, quotedText);
 
                 if (message == null)
                 {
@@ -84,7 +84,7 @@ namespace Bot.Commands
             [SlashCommand("list", "Get a paginated list of quotes.")]
             [Description("List quotes from the server in an interactive fashion.")]
             public async Task ListQuotes(InteractionContext ctx,
-                [Option("search", "Searches for quotes with similar text.")] string search = "", 
+                [Option("search", "Searches for quotes with similar text.")] string search = "",
                 [Option("starting_from", "Only show quotes made before this date.")] string from = null,
                 [Option("stopping_at", "Only show quotes made after this date.")] string to = null,
                 [Option("mentions", "Show only quotes from this user.")] SnowflakeObject user = null)
@@ -111,12 +111,6 @@ namespace Bot.Commands
                 var useToDate = DateTimeOffset.TryParse(to, out var dateTo);
                 var useMentions = user != null;
 
-                /*
-                SELECT q."Id", q."DiscordMessage", q."GuildId", q."LastUpdated", q."Mentions", q."Message", q."Owner", q."OwnerAccountId", q."PreviouslyModifiedQuotes", q."TimeAdded", g."GuildId", g."AllowAudio", g."AllowQuotes", g."AllowSearchCommands", g."AudioPlayerId", g."EnableQuoteChannel", g."HasAgreedToToS", g."QuoteChannelId"
-                FROM "Quotes" AS q
-                INNER JOIN "Guilds" AS g ON q."GuildId" = g."GuildId"
-                WHERE (((g."GuildId" = @__ctx_Guild_Id_0) AND (q."TimeAdded" <= @__dateFrom_1)) AND (q."TimeAdded" >= @__dateTo_2)) AND q."Mentions" @> ARRAY[@__user_Id_3]::numeric(20,0)[]
-                 */
                 var query = Database.Quotes
                     .Include(q => q.Guild)
                     .Where(q => q.Guild.GuildId == ctx.Guild.Id
@@ -127,12 +121,13 @@ namespace Bot.Commands
                 Logger.LogDebug("Query for `quote list`: {}", query.ToQueryString());
 
                 List<Quote> quotes;
-                
+
                 if (search != null)
                 {
+                    // Levenstein Distance can only be up to 255 bytes.
                     var tempQuery =
-                        query.OrderByDescending(q => EF.Functions.FuzzyStringMatchLevenshtein(q.Message, search));
-                    
+                        query.OrderByDescending(q => EF.Functions.FuzzyStringMatchLevenshtein(q.Message.Substring(0, 255), search));
+
                     Logger.LogDebug("Fuzzy Search Query {0}", tempQuery.ToQueryString());
 
                     quotes = await tempQuery.Take(50).ToListAsync();
@@ -171,10 +166,24 @@ namespace Bot.Commands
                     true, ctx.User, pages, behaviour: PaginationBehaviour.WrapAround,
                     deletion: ButtonPaginationBehavior.DeleteMessage);
             }
+            
+            [SlashCommand("delete", "Delete a quote.")]
+            public Task RemoveQuote(InteractionContext ctx,
+                [Autocomplete(typeof(QuoteAutocomplete)), Option("quote", "The Id or quote message that you wish to remove.")] string quote)
+            {
+                throw new NotImplementedException();
+            }
         }
 
-
-        private static async ValueTask<DiscordEmbed> GetQuote(SansDbContext database, BaseContext ctx,
+        /// <summary>
+        /// Inserts a quote into the database and does input validation.
+        /// </summary>
+        /// <param name="database"></param>
+        /// <param name="ctx"></param>
+        /// <param name="mention">The user that you would like to add as a mention.</param>
+        /// <param name="quotedText">The text that you would like to add as the quote's message.</param>
+        /// <returns>An embed that you can show to the user.</returns>
+        private static async ValueTask<DiscordEmbed> InsertQuote(SansDbContext database, BaseContext ctx,
             SnowflakeObject mention, string quotedText)
         {
             var guild = await database.Guilds
@@ -196,13 +205,14 @@ namespace Bot.Commands
                     new DiscordInteractionResponseBuilder().WithContent("Quotes are not enabled on this server."));
                 return null;
             }
-            
+
             var quote = new Quote
             {
                 Guild = guild,
                 Message = quotedText,
                 TimeAdded = DateTimeOffset.UtcNow,
-                Owner = mention?.Id ?? ctx.Member.Id
+                Mentions = mention?.Id != null ? new List<ulong> { mention.Id } : new List<ulong>(),
+                Owner = ctx.Member.Id
             };
 
             await database.Quotes.AddAsync(quote);
@@ -229,19 +239,21 @@ namespace Bot.Commands
         }
     }
 
-    public class QuoteConvertor : IArgumentConverter<Quote>
+    public class QuoteAutocomplete : IAutocompleteProvider
     {
-        public SansDbContext Database { get; init; }
+        private ILogger<QuoteAutocomplete> Logger { get; set; }
 
-        public Task<Optional<Quote>> ConvertAsync(string value, CommandContext ctx)
+        public QuoteAutocomplete(ILogger<QuoteAutocomplete> logger) =>
+            Logger = logger;
+
+        public QuoteAutocomplete()
         {
-            if (!Guid.TryParse(value, out var quoteId)) return Task.FromResult(Optional.FromNoValue<Quote>());
-            // Include all objects from other tables like this?
-            var quote = Database.Quotes
-                .Include(i => i.Guild)
-                .Include(i => i.Owner)
-                .First(q => q.Id == quoteId);
-            return Task.FromResult(quote == null ? Optional.FromNoValue<Quote>() : Optional.FromValue(quote));
+        }
+
+        public Task<IEnumerable<DiscordAutoCompleteChoice>> Provider(AutocompleteContext ctx)
+        {
+            Logger.LogDebug("Testing DI");
+            throw new NotImplementedException();
         }
     }
 }
