@@ -39,7 +39,7 @@ namespace Data
         /// The user's discord Id that submitted (owns) the quote.
         /// </summary>
         [Required]
-        public DiscordUser Owner { get; set; }
+        public ulong Owner { get; set; }
 
 #nullable enable
         public IdentityUser? OwnerAccount { get; set; }

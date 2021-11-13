@@ -4,15 +4,17 @@ using System.Collections.Generic;
 using Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace Data.Migrations
 {
     [DbContext(typeof(SansDbContext))]
-    partial class SansDbContextModelSnapshot : ModelSnapshot
+    [Migration("20211113003124_UpdateFields")]
+    partial class UpdateFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -130,11 +132,11 @@ namespace Data.Migrations
                         .HasMaxLength(1024)
                         .HasColumnType("character varying(1024)");
 
-                    b.Property<decimal>("Owner")
-                        .HasColumnType("numeric(20,0)");
-
                     b.Property<string>("OwnerAccountId")
                         .HasColumnType("text");
+
+                    b.Property<decimal?>("OwnerId")
+                        .HasColumnType("numeric(20,0)");
 
                     b.Property<List<string>>("PreviouslyModifiedQuotes")
                         .HasColumnType("text[]");
@@ -147,6 +149,8 @@ namespace Data.Migrations
                     b.HasIndex("GuildId");
 
                     b.HasIndex("OwnerAccountId");
+
+                    b.HasIndex("OwnerId");
 
                     b.ToTable("Quotes");
                 });
@@ -435,7 +439,13 @@ namespace Data.Migrations
                         .WithMany()
                         .HasForeignKey("OwnerAccountId");
 
+                    b.HasOne("Data.DiscordUser", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerId");
+
                     b.Navigation("Guild");
+
+                    b.Navigation("Owner");
 
                     b.Navigation("OwnerAccount");
                 });
