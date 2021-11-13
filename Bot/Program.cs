@@ -43,6 +43,7 @@ namespace Bot
 
             var dotnetEnvironment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
             var isDevelopment = dotnetEnvironment is "Development";
+            var isStaging = dotnetEnvironment is "Staging";
 
             var builder = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
@@ -82,7 +83,18 @@ namespace Bot
                     loggingOptions.AddConsole();
                     loggingOptions.AddConfiguration(config);
                 })
-                .AddSingleton(dbContext)
+                .AddDbContext<SansDbContext>(options =>
+                {
+                    options.EnableDetailedErrors();
+                    if (isDevelopment)
+                    {
+                        options.EnableSensitiveDataLogging();
+                    }
+                    options.UseNpgsql(config["Database:ConnectionString"], optionsBuilder =>
+                    {
+                        optionsBuilder.UseFuzzyStringMatch();
+                    });
+                })
                 .BuildServiceProvider();
 
             var botConfig = config.GetSection("Bot").Get<BotConfiguration>();

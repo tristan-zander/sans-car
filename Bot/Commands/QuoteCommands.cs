@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -110,18 +111,38 @@ namespace Bot.Commands
                 var useToDate = DateTimeOffset.TryParse(to, out var dateTo);
                 var useMentions = user != null;
 
+                /*
+                SELECT q."Id", q."DiscordMessage", q."GuildId", q."LastUpdated", q."Mentions", q."Message", q."Owner", q."OwnerAccountId", q."PreviouslyModifiedQuotes", q."TimeAdded", g."GuildId", g."AllowAudio", g."AllowQuotes", g."AllowSearchCommands", g."AudioPlayerId", g."EnableQuoteChannel", g."HasAgreedToToS", g."QuoteChannelId"
+                FROM "Quotes" AS q
+                INNER JOIN "Guilds" AS g ON q."GuildId" = g."GuildId"
+                WHERE (((g."GuildId" = @__ctx_Guild_Id_0) AND (q."TimeAdded" <= @__dateFrom_1)) AND (q."TimeAdded" >= @__dateTo_2)) AND q."Mentions" @> ARRAY[@__user_Id_3]::numeric(20,0)[]
+                 */
                 var query = Database.Quotes
                     .Include(q => q.Guild)
                     .Where(q => q.Guild.GuildId == ctx.Guild.Id
                                 && (!useFromDate || q.TimeAdded <= dateFrom)
                                 && (!useToDate || q.TimeAdded >= dateTo)
                                 && (!useMentions || q.Mentions.Contains(user.Id)));
-                
+
                 Logger.LogDebug("Query for `quote list`: {}", query.ToQueryString());
+
+                List<Quote> quotes;
                 
-                var quotes = query
-                    .OrderByDescending(q => q.TimeAdded)
-                    .Take(50).ToList();
+                if (search != null)
+                {
+                    var tempQuery =
+                        query.OrderByDescending(q => EF.Functions.FuzzyStringMatchLevenshtein(q.Message, search));
+                    
+                    Logger.LogDebug("Fuzzy Search Query {0}", tempQuery.ToQueryString());
+
+                    quotes = await tempQuery.Take(50).ToListAsync();
+                }
+                else
+                {
+                    quotes = await query
+                        .OrderByDescending(q => q.TimeAdded)
+                        .Take(50).ToListAsync();
+                }
 
                 if (quotes.Count <= 0)
                 {
@@ -184,7 +205,7 @@ namespace Bot.Commands
                 Owner = mention?.Id ?? ctx.Member.Id
             };
 
-            var entity = await database.Quotes.AddAsync(quote);
+            await database.Quotes.AddAsync(quote);
             await database.SaveChangesAsync();
 
             var blamedMember = await ctx.Guild.GetMemberAsync(quote.Owner);
