@@ -8,11 +8,11 @@
   </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="DSharpPlus" Version="4.2.0-nightly-01040" />
-      <PackageReference Include="DSharpPlus.CommandsNext" Version="4.2.0-nightly-01040" />
-      <PackageReference Include="DSharpPlus.Interactivity" Version="4.2.0-nightly-01040" />
-      <PackageReference Include="DSharpPlus.Lavalink" Version="4.2.0-nightly-01040" />
-      <PackageReference Include="DSharpPlus.SlashCommands" Version="4.2.0-nightly-01040" />
+      <PackageReference Include="DSharpPlus" Version="4.2.0-nightly-01044" />
+      <PackageReference Include="DSharpPlus.CommandsNext" Version="4.2.0-nightly-01044" />
+      <PackageReference Include="DSharpPlus.Interactivity" Version="4.2.0-nightly-01044" />
+      <PackageReference Include="DSharpPlus.Lavalink" Version="4.2.0-nightly-01044" />
+      <PackageReference Include="DSharpPlus.SlashCommands" Version="4.2.0-nightly-01044" />
       <PackageReference Include="FuzzySharp" Version="2.0.2" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="5.0.8">
         <PrivateAssets>all</PrivateAssets>
@@ -29,6 +29,7 @@
       <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="5.0.0" />
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.Design" Version="1.1.0" />
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.FuzzyStringMatch" Version="5.0.10" />
+      <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.Trigrams" Version="5.0.10" />
     </ItemGroup>
 
     <ItemGroup>

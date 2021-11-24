@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using DSharpPlus.Entities;
 using Microsoft.AspNetCore.Identity;
+using NpgsqlTypes;
 
 namespace Data
 {
@@ -14,6 +16,7 @@ namespace Data
         /// The guild that the quote belongs to.
         /// </summary>
         [Required]
+        public ulong GuildId { get; set; }
         public Guild Guild { get; set; }
 
         [Required, MaxLength(1024)] public string Message { get; set; }
@@ -21,7 +24,7 @@ namespace Data
         /// <summary>
         /// A list of people that are attributed to the quote. List is Ids of SnowflakeObjects.
         /// </summary>
-        public List<ulong> Mentions { get; set; } = new();
+        public HashSet<ulong> Mentions { get; set; } = new();
 
         [Required] public DateTimeOffset TimeAdded { get; set; }
 

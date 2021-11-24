@@ -4,15 +4,17 @@ using System.Collections.Generic;
 using Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace Data.Migrations
 {
     [DbContext(typeof(SansDbContext))]
-    partial class SansDbContextModelSnapshot : ModelSnapshot
+    [Migration("20211124022834_ulongToDiscordUser")]
+    partial class ulongToDiscordUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -58,6 +60,22 @@ namespace Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Channels");
+                });
+
+            modelBuilder.Entity("Data.DiscordUser", b =>
+                {
+                    b.Property<decimal>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("numeric(20,0)");
+
+                    b.Property<Guid?>("QuoteId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuoteId");
+
+                    b.ToTable("DiscordUser");
                 });
 
             modelBuilder.Entity("Data.Guild", b =>
@@ -108,25 +126,19 @@ namespace Data.Migrations
                     b.Property<decimal>("GuildId")
                         .HasColumnType("numeric(20,0)");
 
-                    b.Property<decimal?>("GuildId1")
-                        .HasColumnType("numeric(20,0)");
-
                     b.Property<DateTimeOffset?>("LastUpdated")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<decimal[]>("Mentions")
-                        .HasColumnType("numeric[]");
 
                     b.Property<string>("Message")
                         .IsRequired()
                         .HasMaxLength(1024)
                         .HasColumnType("character varying(1024)");
 
-                    b.Property<decimal>("Owner")
-                        .HasColumnType("numeric(20,0)");
-
                     b.Property<string>("OwnerAccountId")
                         .HasColumnType("text");
+
+                    b.Property<decimal?>("OwnerId")
+                        .HasColumnType("numeric(20,0)");
 
                     b.Property<List<string>>("PreviouslyModifiedQuotes")
                         .HasColumnType("text[]");
@@ -138,9 +150,9 @@ namespace Data.Migrations
 
                     b.HasIndex("GuildId");
 
-                    b.HasIndex("GuildId1");
-
                     b.HasIndex("OwnerAccountId");
+
+                    b.HasIndex("OwnerId");
 
                     b.ToTable("Quotes");
                 });
@@ -395,6 +407,13 @@ namespace Data.Migrations
                     b.Navigation("VoiceChannel");
                 });
 
+            modelBuilder.Entity("Data.DiscordUser", b =>
+                {
+                    b.HasOne("Data.Quote", null)
+                        .WithMany("Mentions")
+                        .HasForeignKey("QuoteId");
+                });
+
             modelBuilder.Entity("Data.Guild", b =>
                 {
                     b.HasOne("Data.AudioPlayer", "AudioPlayer")
@@ -412,21 +431,23 @@ namespace Data.Migrations
 
             modelBuilder.Entity("Data.Quote", b =>
                 {
-                    b.HasOne("Data.Guild", null)
+                    b.HasOne("Data.Guild", "Guild")
                         .WithMany("Quotes")
                         .HasForeignKey("GuildId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Data.Guild", "Guild")
-                        .WithMany()
-                        .HasForeignKey("GuildId1");
-
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "OwnerAccount")
                         .WithMany()
                         .HasForeignKey("OwnerAccountId");
 
+                    b.HasOne("Data.DiscordUser", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerId");
+
                     b.Navigation("Guild");
+
+                    b.Navigation("Owner");
 
                     b.Navigation("OwnerAccount");
                 });
@@ -492,6 +513,11 @@ namespace Data.Migrations
             modelBuilder.Entity("Data.Guild", b =>
                 {
                     b.Navigation("Quotes");
+                });
+
+            modelBuilder.Entity("Data.Quote", b =>
+                {
+                    b.Navigation("Mentions");
                 });
 
             modelBuilder.Entity("Data.SongQueue", b =>

@@ -93,6 +93,7 @@ namespace Bot
                     options.UseNpgsql(config["Database:ConnectionString"], optionsBuilder =>
                     {
                         optionsBuilder.UseFuzzyStringMatch();
+                        optionsBuilder.UseTrigrams();
                     });
                 })
                 .BuildServiceProvider();
@@ -110,8 +111,17 @@ namespace Bot
                 Services = services
             };
             var slashExt = await bot.UseSlashCommandsAsync(slashConf);
-            slashExt.RegisterCommands<SlashCommands>();
-            slashExt.RegisterCommands<QuoteCommands>();
+
+            if (isDevelopment && ulong.TryParse(config["DevelopmentGuild"], out var guildId))
+            {
+                slashExt.RegisterCommands<SlashCommands>(guildId);
+                slashExt.RegisterCommands<QuoteCommands>(guildId);
+            }
+            else
+            {
+                slashExt.RegisterCommands<SlashCommands>();
+                slashExt.RegisterCommands<QuoteCommands>();
+            }
 
             foreach (var shard in bot.ShardClients.Keys)
             {

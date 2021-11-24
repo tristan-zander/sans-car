@@ -4,15 +4,17 @@ using System.Collections.Generic;
 using Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace Data.Migrations
 {
     [DbContext(typeof(SansDbContext))]
-    partial class SansDbContextModelSnapshot : ModelSnapshot
+    [Migration("20211124015226_AddTrigramExtension")]
+    partial class AddTrigramExtension
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -108,14 +110,11 @@ namespace Data.Migrations
                     b.Property<decimal>("GuildId")
                         .HasColumnType("numeric(20,0)");
 
-                    b.Property<decimal?>("GuildId1")
-                        .HasColumnType("numeric(20,0)");
-
                     b.Property<DateTimeOffset?>("LastUpdated")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<decimal[]>("Mentions")
-                        .HasColumnType("numeric[]");
+                    b.Property<List<ulong>>("Mentions")
+                        .HasColumnType("numeric(20,0)[]");
 
                     b.Property<string>("Message")
                         .IsRequired()
@@ -137,8 +136,6 @@ namespace Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("GuildId");
-
-                    b.HasIndex("GuildId1");
 
                     b.HasIndex("OwnerAccountId");
 
@@ -412,15 +409,11 @@ namespace Data.Migrations
 
             modelBuilder.Entity("Data.Quote", b =>
                 {
-                    b.HasOne("Data.Guild", null)
+                    b.HasOne("Data.Guild", "Guild")
                         .WithMany("Quotes")
                         .HasForeignKey("GuildId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("Data.Guild", "Guild")
-                        .WithMany()
-                        .HasForeignKey("GuildId1");
 
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "OwnerAccount")
                         .WithMany()

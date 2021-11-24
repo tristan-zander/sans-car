@@ -5,9 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Data;
 using DSharpPlus;
-using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
-using DSharpPlus.CommandsNext.Converters;
 using DSharpPlus.Entities;
 using DSharpPlus.Interactivity.Enums;
 using DSharpPlus.Interactivity.Extensions;
@@ -79,9 +77,7 @@ namespace Bot.Commands
             }
 
 
-            // TODO add functionality for "sans quote list --show ids"
-            // Might be useful for reporting quotes or removing them on masse
-            [SlashCommand("list", "Get a paginated list of quotes.")]
+            [SlashCommand("search", "Search for quotes based on certain criteria.")]
             [Description("List quotes from the server in an interactive fashion.")]
             public async Task ListQuotes(InteractionContext ctx,
                 [Option("search", "Searches for quotes with similar text.")] string search = "",
@@ -126,9 +122,9 @@ namespace Bot.Commands
                 {
                     // Levenstein Distance can only be up to 255 bytes.
                     var tempQuery =
-                        query.OrderByDescending(q => EF.Functions.FuzzyStringMatchLevenshtein(q.Message.Substring(0, 255), search));
+                        query.OrderBy(q => EF.Functions.TrigramsSimilarityDistance(q.Message, search));
 
-                    Logger.LogDebug("Fuzzy Search Query {0}", tempQuery.ToQueryString());
+                    Logger.LogDebug("Fuzzy Search Query {}", tempQuery.ToQueryString());
 
                     quotes = await tempQuery.Take(50).ToListAsync();
                 }
@@ -143,7 +139,8 @@ namespace Bot.Commands
                 {
                     await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
                         new DiscordInteractionResponseBuilder().WithContent(
-                            "I couldn't find any quotes that matched. Are you being too specific?"));
+                            "I couldn't find any quotes that matched. Are you being too specific?")
+                            .AsEphemeral(true));
                     return;
                 }
 
@@ -155,7 +152,7 @@ namespace Bot.Commands
                     output.Append($"```{quote.Message.Replace("`", "")}```{quoteUser.Mention} on {quote.TimeAdded:d}\n\n");
                 }
 
-                // remove the final 2 endlines.
+                // remove the final 2 end-lines.
                 output.Remove(output.Length - 2, 2);
 
                 var embedBuilder = new DiscordEmbedBuilder().WithColor(DiscordColor.Blue);
@@ -166,12 +163,36 @@ namespace Bot.Commands
                     true, ctx.User, pages, behaviour: PaginationBehaviour.WrapAround,
                     deletion: ButtonPaginationBehavior.DeleteMessage);
             }
-            
+
+            /// <summary>
+            /// Delete a quote from the database.
+            /// </summary>
+            /// <param name="ctx">The slash command context.</param>
+            /// <param name="quote">An ID to a pre-existing quote.</param>
             [SlashCommand("delete", "Delete a quote.")]
-            public Task RemoveQuote(InteractionContext ctx,
-                [Autocomplete(typeof(QuoteAutocomplete)), Option("quote", "The Id or quote message that you wish to remove.")] string quote)
+            public async Task RemoveQuote(InteractionContext ctx,
+                [Autocomplete(typeof(QuoteAutocomplete)), Option("quote", "The Id of a quote that you wish to remove.")] string quoteId)
             {
-                throw new NotImplementedException();
+                Guid id;
+                if (string.IsNullOrEmpty(quoteId) || !Guid.TryParse(quoteId, out id))
+                {
+                    await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                        new DiscordInteractionResponseBuilder()
+                            .WithContent("Invalid Quote given to /quote delete.\n" +
+                                         "Please only pick a quote from the autocomplete or type in a Quote ID.")
+                            .AsEphemeral(true));
+                    return;
+                }
+
+                var quoteToRemove = await Database.Quotes.SingleAsync(q => q.Id == id);
+                Database.Quotes.Remove(quoteToRemove);
+                await Database.SaveChangesAsync();
+
+                var member = await ctx.Guild.GetMemberAsync(quoteToRemove.Owner);
+
+                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                    new DiscordInteractionResponseBuilder().WithContent($"{ctx.Member.Mention} removed quote {quoteToRemove.Id:N}\n" +
+                                                                        $"Which was originally owned by {member.Mention ?? "unknown"}."));
             }
         }
 
@@ -206,12 +227,15 @@ namespace Bot.Commands
                 return null;
             }
 
+            var mentionList = mention?.Id != null ? new HashSet<ulong> { mention.Id } : new HashSet<ulong>();
+
             var quote = new Quote
             {
+                GuildId = guild.GuildId,
                 Guild = guild,
                 Message = quotedText,
                 TimeAdded = DateTimeOffset.UtcNow,
-                Mentions = mention?.Id != null ? new List<ulong> { mention.Id } : new List<ulong>(),
+                Mentions = mentionList,
                 Owner = ctx.Member.Id
             };
 
@@ -228,7 +252,7 @@ namespace Bot.Commands
                 .WithAuthor($"{blamedMember.Username}#{blamedMember.Discriminator}")
                 .Build();
 
-            // TODO: Move logic to something that listens on pg_notify
+            // TODO: Create an event on Kafka so that other services are aware that the quote has been created.
             if (guild.EnableQuoteChannel && guild.QuoteChannel != null)
             {
                 var channel = await ctx.Client.GetChannelAsync(guild.QuoteChannel.Id);
@@ -243,17 +267,61 @@ namespace Bot.Commands
     {
         private ILogger<QuoteAutocomplete> Logger { get; set; }
 
-        public QuoteAutocomplete(ILogger<QuoteAutocomplete> logger) =>
-            Logger = logger;
+        private SansDbContext Database { get; set; }
 
         public QuoteAutocomplete()
-        {
-        }
+        { }
 
-        public Task<IEnumerable<DiscordAutoCompleteChoice>> Provider(AutocompleteContext ctx)
+        // TODO: Don't get any quotes that are already present on the autocomplete context.
+        public async Task<IEnumerable<DiscordAutoCompleteChoice>> Provider(AutocompleteContext ctx)
         {
-            Logger.LogDebug("Testing DI");
-            throw new NotImplementedException();
+            Database ??= ctx.Services.GetService(typeof(SansDbContext)) as SansDbContext;
+            Logger ??= ctx.Services.GetService(typeof(ILogger<QuoteAutocomplete>)) as ILogger<QuoteAutocomplete>;
+
+            if (Database == null)
+            {
+                return null;
+            }
+
+            var query = Database.Quotes
+                .OrderBy(q => q.TimeAdded).Where(q => q.Guild.GuildId == ctx.Guild.Id);
+
+            if (!String.IsNullOrWhiteSpace(ctx.OptionValue.ToString()))
+            {
+                query = query.OrderByDescending(q => EF.Functions.TrigramsSimilarity(q.Message, ctx.OptionValue.ToString()));
+            }
+
+            var quotes = await query
+                .Take(15).ToListAsync();
+
+            var choices = quotes.Select(q =>
+            {
+                string message;
+                var member = ctx.Guild.GetMemberAsync(q.Owner).Result;
+                string nickname;
+                if (member != null)
+                {
+                    nickname = member.Nickname;
+                }
+                else
+                {
+                    var user = ctx.Client.GetUserAsync(q.Owner).Result;
+                    nickname = $"{user.Username}#{user.Discriminator}";
+                }
+
+                var time = q.LastUpdated?.ToString() ?? q.TimeAdded.ToString();
+                if (q.Message.Length < 25)
+                {
+                    message = $"\"{q.Message[..q.Message.Length]}\" - {nickname} on {time}";
+                }
+                else
+                {
+                    message = $"\"{q.Message[..22]}...\" - {nickname} on {time}";
+                }
+                return new DiscordAutoCompleteChoice(message, q.Id.ToString());
+            });
+
+            return choices;
         }
     }
 }
