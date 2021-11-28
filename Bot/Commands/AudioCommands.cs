@@ -190,5 +190,43 @@ namespace Bot.Commands
 
             await conn.PauseAsync();
         }
+        /* TODO: Implement playing and queuing multiple urls.
+        [Command("play")]
+        public async Task Play(CommandContext ctx, params Uri[] uris)
+        {
+            if (ctx.Member.VoiceState == null || ctx.Member.VoiceState.Channel == null)
+            {
+                await ctx.RespondAsync("You are not in a voice channel.");
+                return;
+            }
+
+            var lava = ctx.Client.GetLavalink();
+            var node = lava.ConnectedNodes.Values.First();
+
+            var conn = node.GetGuildConnection(ctx.Member.VoiceState.Guild);
+
+            if (conn == null)
+            {
+                await ctx.RespondAsync("Could not connect to audio server.");
+                return;
+            }
+
+            var loadResult = await node.Rest.GetTracksAsync(search);
+            {
+            }
+
+            if (loadResult.LoadResultType is LavalinkLoadResultType.LoadFailed or LavalinkLoadResultType.NoMatches)
+            {
+                await ctx.RespondAsync($"Track search failed for {search}.");
+                return;
+            }
+
+            var track = loadResult.Tracks.First();
+
+            await conn.PlayAsync(track);
+
+            await ctx.RespondAsync($"Now playing {track.Title}!");
+        } 
+        */
     }
 }
