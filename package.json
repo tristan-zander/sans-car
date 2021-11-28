@@ -10,7 +10,7 @@
   },
   "scripts": {
     "preinstall": "dotnet tool restore",
-    "format": "dotnet format .",
+    "format": "lint-staged -r",
     "prepare": "husky install",
     "test": "echo Testing not implemented."
   },
