@@ -9,20 +9,23 @@
     }
   },
   "scripts": {
-    "preinstall": "dotnet tool restore"
+    "preinstall": "dotnet tool restore",
+    "format": "dotnet format .",
+    "prepare": "husky install",
+    "test": "echo Testing not implemented."
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/tristan-zander/sans-car.git"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MPL",
   "bugs": {
     "url": "https://github.com/tristan-zander/sans-car/issues"
   },
   "homepage": "https://github.com/tristan-zander/sans-car#readme",
   "devDependencies": {
-    "husky": "^7.0.4",
+    "husky": "^7.0.0",
     "lint-staged": "^12.1.2"
   }
 }
