@@ -13,6 +13,9 @@ jobs:
 
       - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@v1.8.2
+        
+      - name: Add DSharpPlus nightly sources
+        run:  dotnet nuget add source "https://nuget.emzi0767.com/api/v3/index.json" -n SlimGet
 
       - name: Install dependencies
         run: dotnet restore
