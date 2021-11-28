@@ -12,7 +12,6 @@ using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.SlashCommands;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using DiscordUser = Data.DiscordUser;
 
 namespace Bot.Commands
 {
@@ -80,10 +79,14 @@ namespace Bot.Commands
             [SlashCommand("search", "Search for quotes based on certain criteria.")]
             [Description("List quotes from the server in an interactive fashion.")]
             public async Task ListQuotes(InteractionContext ctx,
-                [Option("search", "Searches for quotes with similar text.")] string search = "",
-                [Option("starting_from", "Only show quotes made before this date.")] string from = null,
-                [Option("stopping_at", "Only show quotes made after this date.")] string to = null,
-                [Option("mentions", "Show only quotes from this user.")] SnowflakeObject user = null)
+                [Option("search", "Searches for quotes with similar text.")]
+                string search = "",
+                [Option("starting_from", "Only show quotes made before this date.")]
+                string from = null,
+                [Option("stopping_at", "Only show quotes made after this date.")]
+                string to = null,
+                [Option("mentions", "Show only quotes from this user.")]
+                DiscordUser user = null)
             {
                 var guild = await Database.Guilds.FindAsync(ctx.Guild.Id);
 
@@ -139,7 +142,7 @@ namespace Bot.Commands
                 {
                     await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
                         new DiscordInteractionResponseBuilder().WithContent(
-                            "I couldn't find any quotes that matched. Are you being too specific?")
+                                "I couldn't find any quotes that matched. Are you being too specific?")
                             .AsEphemeral(true));
                     return;
                 }
@@ -149,7 +152,8 @@ namespace Bot.Commands
                 foreach (var quote in quotes)
                 {
                     var quoteUser = await ctx.Client.GetUserAsync(quote.Owner);
-                    output.Append($"```{quote.Message.Replace("`", "")}```{quoteUser.Mention} on {quote.TimeAdded:d}\n\n");
+                    output.Append(
+                        $"```{quote.Message.Replace("`", "")}```{quoteUser.Mention} on {quote.TimeAdded:d}\n\n");
                 }
 
                 // remove the final 2 end-lines.
@@ -171,7 +175,8 @@ namespace Bot.Commands
             /// <param name="quote">An ID to a pre-existing quote.</param>
             [SlashCommand("delete", "Delete a quote.")]
             public async Task RemoveQuote(InteractionContext ctx,
-                [Autocomplete(typeof(QuoteAutocomplete)), Option("quote", "The Id of a quote that you wish to remove.")] string quoteId)
+                [Autocomplete(typeof(QuoteAutocomplete)), Option("quote", "The Id of a quote that you wish to remove.")]
+                string quoteId)
             {
                 Guid id;
                 if (string.IsNullOrEmpty(quoteId) || !Guid.TryParse(quoteId, out id))
@@ -191,8 +196,94 @@ namespace Bot.Commands
                 var member = await ctx.Guild.GetMemberAsync(quoteToRemove.Owner);
 
                 await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                    new DiscordInteractionResponseBuilder().WithContent($"{ctx.Member.Mention} removed quote {quoteToRemove.Id:N}\n" +
-                                                                        $"Which was originally owned by {member.Mention ?? "unknown"}."));
+                    new DiscordInteractionResponseBuilder().WithContent(
+                        $"{ctx.Member.Mention} removed quote {quoteToRemove.Id:N}\n" +
+                        $"Which was originally owned by {member.Mention ?? "unknown"}."));
+            }
+
+            [SlashCommand("add_mention", "Mention a person or role on a quote.")]
+            public async Task AddMention(InteractionContext ctx,
+                [Autocomplete(typeof(QuoteAutocomplete)),
+                 Option("quote", "The quote or quote id that you wish to add a mention.")]
+                string quoteId,
+                [Option("mention", "The user that you wish to mention on the quote.")]
+                DiscordUser user)
+            {
+                if (string.IsNullOrWhiteSpace(quoteId))
+                {
+                    await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                        new DiscordInteractionResponseBuilder()
+                            .WithContent("Sorry, you must enter a valid quote.").AsEphemeral(true));
+                    return;
+                }
+
+                if (!Guid.TryParse(quoteId, out var id))
+                {
+                    await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                        new DiscordInteractionResponseBuilder()
+                            .WithContent("There was an error with the quote. Did you enter a proper quote id?")
+                            .AsEphemeral(true));
+                    Logger.LogDebug("Could not convert QuoteId {QuoteId} to Guid", quoteId);
+                    return;
+                }
+
+                var quote = await Database.Quotes.SingleAsync(q => q.Id == id);
+
+                if (quote.Mentions.Contains(user.Id))
+                {
+                    await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                        new DiscordInteractionResponseBuilder().WithContent("The quote already mentions that user.")
+                            .AsEphemeral(true));
+                    return;
+                }
+
+                quote.Mentions.Add(user.Id);
+
+                Database.Quotes.Update(quote);
+                await Database.SaveChangesAsync();
+
+                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                    new DiscordInteractionResponseBuilder().WithContent($"Mentioned {user.Mention} on the quote."));
+            }
+            [SlashCommand("show", "Display a quote from your guild.")]
+            public async Task ShowQuote(InteractionContext ctx,
+                [Autocomplete(typeof(QuoteAutocomplete)), Option("quote", "The quote or quote Id that will be displayed.")]
+                string quoteId)
+            {
+                // TODO: Add this validation logic to the Quote object. (e.g. Quote.FromId())
+                if (string.IsNullOrWhiteSpace(quoteId))
+                {
+                    await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                        new DiscordInteractionResponseBuilder()
+                            .WithContent("Sorry, you must enter a valid quote.").AsEphemeral(true));
+                    return;
+                }
+                
+                if (!Guid.TryParse(quoteId, out var id))
+                {
+                    await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                        new DiscordInteractionResponseBuilder()
+                            .WithContent("There was an error with the quote. Did you enter a proper quote id?")
+                            .AsEphemeral(true));
+                    Logger.LogDebug("Could not convert QuoteId {QuoteId} to Guid", quoteId);
+                    return;
+                }
+
+                var quote = await Database.Quotes.SingleAsync(q => q.Id == id);
+
+                // TODO: Make this an extension on the Quote object.
+                var blamedMember = await ctx.Guild.GetMemberAsync(quote.Owner);
+                var message = new DiscordEmbedBuilder()
+                    .WithColor(DiscordColor.Blue)
+                    .WithUrl("https://sanscar.net")
+                    .AddField($"{blamedMember.Nickname ?? blamedMember.Username}", $"{quote.Message}")
+                    .WithFooter($"ID: {quote.Id:N}")
+                    .WithTimestamp(quote.TimeAdded)
+                    .WithAuthor($"{blamedMember.Username}#{blamedMember.Discriminator}")
+                    .Build();
+
+                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                    new DiscordInteractionResponseBuilder().AddEmbed(message));
             }
         }
 
@@ -270,7 +361,8 @@ namespace Bot.Commands
         private SansDbContext Database { get; set; }
 
         public QuoteAutocomplete()
-        { }
+        {
+        }
 
         // TODO: Don't get any quotes that are already present on the autocomplete context.
         public async Task<IEnumerable<DiscordAutoCompleteChoice>> Provider(AutocompleteContext ctx)
@@ -288,7 +380,8 @@ namespace Bot.Commands
 
             if (!String.IsNullOrWhiteSpace(ctx.OptionValue.ToString()))
             {
-                query = query.OrderByDescending(q => EF.Functions.TrigramsSimilarity(q.Message, ctx.OptionValue.ToString()));
+                query = query.OrderByDescending(q =>
+                    EF.Functions.TrigramsSimilarity(q.Message, ctx.OptionValue.ToString()));
             }
 
             var quotes = await query
@@ -318,6 +411,7 @@ namespace Bot.Commands
                 {
                     message = $"\"{q.Message[..22]}...\" - {nickname} on {time}";
                 }
+
                 return new DiscordAutoCompleteChoice(message, q.Id.ToString());
             });
 
