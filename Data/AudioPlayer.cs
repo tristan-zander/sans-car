@@ -15,7 +15,7 @@ namespace Data
 #nullable enable
         public SongQueue? SongQueue { get; set; }
         // The voice channel that the bot sits in.
-        public Channel? VoiceChannel { get; set; }
+        public ulong? VoiceChannel { get; set; }
 #nullable disable
     }
 }

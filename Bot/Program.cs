@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -13,10 +13,13 @@ using DSharpPlus.Interactivity.Enums;
 using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.Lavalink;
 using DSharpPlus.Net;
+using DSharpPlus.SlashCommands;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Configuration;
 using LavalinkConfiguration = DSharpPlus.Lavalink.LavalinkConfiguration;
 
 namespace Bot
@@ -30,6 +33,7 @@ namespace Bot
             Task.Delay(-1).Wait();
 
             // TODO: be able to restart the bot on a whim if you're an admin.
+            // Use a Monitor and lock to do this.
             client.StopAsync().Wait();
         }
 
@@ -39,6 +43,7 @@ namespace Bot
 
             var dotnetEnvironment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
             var isDevelopment = dotnetEnvironment is "Development";
+            var isStaging = dotnetEnvironment is "Staging";
 
             var builder = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
@@ -71,28 +76,62 @@ namespace Bot
             var dbContext = new SansDbContext(config["Database:ConnectionString"]);
 
             var services = new ServiceCollection()
-                .AddSingleton(bot.Logger)
-                .AddSingleton(dbContext)
+                .AddLogging(loggingOptions =>
+                {
+                    // yyyy-MM-dd HH:mm:ss zzz
+                    loggingOptions.SetMinimumLevel(LogLevel.Debug);
+                    loggingOptions.AddConsole();
+                    loggingOptions.AddConfiguration(config);
+                })
+                .AddDbContext<SansDbContext>(options =>
+                {
+                    options.EnableDetailedErrors();
+                    if (isDevelopment)
+                    {
+                        options.EnableSensitiveDataLogging();
+                    }
+                    options.UseNpgsql(config["Database:ConnectionString"], optionsBuilder =>
+                    {
+                        optionsBuilder.UseFuzzyStringMatch();
+                        optionsBuilder.UseTrigrams();
+                    });
+                })
                 .BuildServiceProvider();
 
             var botConfig = config.GetSection("Bot").Get<BotConfiguration>();
-            var commands = await bot.UseCommandsNextAsync(
-                new CommandsNextConfiguration
-                {
-                    StringPrefixes = botConfig.Prefixes ?? new[] { "sans ", "s?" },
-                    Services = services
-                });
+
+            var slashConf = new SlashCommandsConfiguration
+            {
+                Services = services
+            };
+            var slashExt = await bot.UseSlashCommandsAsync(slashConf);
+
+            if (isDevelopment && ulong.TryParse(config["DevelopmentGuild"], out var guildId))
+            {
+                slashExt.RegisterCommands<SlashCommands>(guildId);
+                slashExt.RegisterCommands<QuoteCommands>(guildId);
+                slashExt.RegisterCommands<AdminCommands>(guildId);
+            }
+            else
+            {
+                slashExt.RegisterCommands<SlashCommands>();
+                slashExt.RegisterCommands<QuoteCommands>();
+                slashExt.RegisterCommands<AdminCommands>();
+            }
 
             foreach (var shard in bot.ShardClients.Keys)
             {
-                commands[shard]?.RegisterCommands(Assembly.GetExecutingAssembly());
+
+                slashExt[shard].SlashCommandErrored += (sender, eventArgs) =>
+                {
+                    bot.Logger.LogError(eventArgs.Exception, "Slash command failed");
+                    return Task.CompletedTask;
+                };
 
                 #region OnCommandError
 
-                commands[shard].CommandErrored += async (ev, arg) =>
+                /* commands[shard].CommandErrored += async (ev, arg) =>
                 {
-
-
                     switch (arg.Exception)
                     {
                         case CommandNotFoundException or ArgumentException:
@@ -106,13 +145,13 @@ namespace Bot
 
                                     if (databaseValues == null)
                                     {
-                                        // We probably did an update with a database entry that doesn't exist here.
+                                        // We probably did an update with a Database entry that doesn't exist here.
                                         entry.OriginalValues.SetValues(proposedValues);
 
                                         continue;
                                     }
 
-                                    // Otherwise prioritize the database values.
+                                    // Otherwise prioritize the Database values.
                                     entry.OriginalValues.SetValues(databaseValues);
                                 }
 
@@ -123,13 +162,15 @@ namespace Bot
 
                     bot.Logger.LogError(arg.Exception, "CommandsNext command failed");
 
-                    // TODO: Send the exception to the database.
+                    // TODO: Send the exception to the Database.
 
-                    await arg.Context.RespondAsync($"The bot ran into an error while trying to execute your command.\n```{arg.Exception.Message}```");
+                    await arg.Context.RespondAsync(
+                        $"The bot ran into an error while trying to execute your command.\n```{arg.Exception.Message}```");
                 };
+                
+                */
 
                 #endregion
-
             }
 
             var searchCommands = new SearchCommands(bot.Logger, dbContext);

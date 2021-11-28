@@ -61,7 +61,8 @@ namespace Bot.Commands
         {
             if (args.Author.IsBot) return;
 
-            var commands = _commands.Keys.Where(commName => args.Message.Content.ToUpper().Contains(commName)).ToArray();
+            var commands = _commands.Keys.Where(commName => args.Message.Content.ToUpper().Contains(commName))
+                .ToArray();
 
             if (!commands.Any())
             {
@@ -77,40 +78,43 @@ namespace Bot.Commands
                 {
                     await _commands[commName].Execute(sender, args);
                 }
-                // TODO: Send this to the database for auditing. Look into Serilog or just put it on the database.
+                // TODO: Send this to the Database for auditing. Look into Serilog or just put it on the Database.
                 catch (Exception e)
                 {
                     Logger.LogError(e, "Failed to execute command {Command}", commName);
-                    await args.Message.RespondAsync("I was supposed to send you a message, but I failed somewhere. Please try again or contact the developer.");
+                    await args.Message.RespondAsync(
+                        "I was supposed to send you a message, but I failed somewhere. Please try again or contact the developer.");
                 }
             }
         }
-    }
 
-    public class SansCarSearchCommand : ISearchCommand
-    {
-        private ILogger<BaseDiscordClient> _logger;
-        public string GetName()
-        {
-            return "Sans car";
-        }
 
-        public string[] GetAliases()
+        public class SansCarSearchCommand : ISearchCommand
         {
-            return new[] { "sans car", "sanscar" };
-        }
+            private ILogger<BaseDiscordClient> _logger;
 
-        public void SetLogger(ILogger<BaseDiscordClient> logger)
-        {
-            _logger = logger;
-        }
+            public string GetName()
+            {
+                return "Sans car";
+            }
 
-        public async Task Execute(DiscordClient sender, MessageCreateEventArgs args)
-        {
-            await using var imageFile = MediaResources.GetImage("sans-car.jpg");
-            var message = new DiscordMessageBuilder()
-                .WithFile(imageFile);
-            await args.Message.RespondAsync(message);
+            public string[] GetAliases()
+            {
+                return new[] { "sans car", "sanscar" };
+            }
+
+            public void SetLogger(ILogger<BaseDiscordClient> logger)
+            {
+                _logger = logger;
+            }
+
+            public async Task Execute(DiscordClient sender, MessageCreateEventArgs args)
+            {
+                await using var imageFile = MediaResources.GetImage("sans-car.jpg");
+                var message = new DiscordMessageBuilder()
+                    .WithFile(imageFile);
+                await args.Message.RespondAsync(message);
+            }
         }
     }
 
