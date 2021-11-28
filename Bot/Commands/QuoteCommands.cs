@@ -16,7 +16,7 @@ using Microsoft.Extensions.Logging;
 namespace Bot.Commands
 {
     // TODO: make sure that admins can execute quote commands regardless of whether it's enabled or not.
-    [Group("quote"), Aliases("q", "quotes", "quo")]
+    [Group("quote")]
     [Description("Manage quotes from your server. Quotes can be listed at any time or posted to specific channels.")]
     public class QuoteCommands : ApplicationCommandModule
     {
@@ -258,7 +258,7 @@ namespace Bot.Commands
                             .WithContent("Sorry, you must enter a valid quote.").AsEphemeral(true));
                     return;
                 }
-                
+
                 if (!Guid.TryParse(quoteId, out var id))
                 {
                     await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
@@ -344,11 +344,10 @@ namespace Bot.Commands
                 .Build();
 
             // TODO: Create an event on Kafka so that other services are aware that the quote has been created.
-            if (guild.EnableQuoteChannel && guild.QuoteChannel != null)
-            {
-                var channel = await ctx.Client.GetChannelAsync(guild.QuoteChannel.Id);
-                await channel.SendMessageAsync(message);
-            }
+            if (!guild.EnableQuoteChannel || guild.QuoteChannel == null) return message;
+            
+            var channel = await ctx.Client.GetChannelAsync(guild.QuoteChannel.Value);
+            await channel.SendMessageAsync(message);
 
             return message;
         }

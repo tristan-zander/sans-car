@@ -99,12 +99,6 @@ namespace Bot
                 .BuildServiceProvider();
 
             var botConfig = config.GetSection("Bot").Get<BotConfiguration>();
-            var commands = await bot.UseCommandsNextAsync(
-                new CommandsNextConfiguration
-                {
-                    StringPrefixes = botConfig.Prefixes ?? new[] { "sans ", "s?" },
-                    Services = services
-                });
 
             var slashConf = new SlashCommandsConfiguration
             {
@@ -116,16 +110,17 @@ namespace Bot
             {
                 slashExt.RegisterCommands<SlashCommands>(guildId);
                 slashExt.RegisterCommands<QuoteCommands>(guildId);
+                slashExt.RegisterCommands<AdminCommands>(guildId);
             }
             else
             {
                 slashExt.RegisterCommands<SlashCommands>();
                 slashExt.RegisterCommands<QuoteCommands>();
+                slashExt.RegisterCommands<AdminCommands>();
             }
 
             foreach (var shard in bot.ShardClients.Keys)
             {
-                commands[shard]?.RegisterCommands(Assembly.GetExecutingAssembly());
 
                 slashExt[shard].SlashCommandErrored += (sender, eventArgs) =>
                 {
@@ -135,7 +130,7 @@ namespace Bot
 
                 #region OnCommandError
 
-                commands[shard].CommandErrored += async (ev, arg) =>
+                /* commands[shard].CommandErrored += async (ev, arg) =>
                 {
                     switch (arg.Exception)
                     {
@@ -172,6 +167,8 @@ namespace Bot
                     await arg.Context.RespondAsync(
                         $"The bot ran into an error while trying to execute your command.\n```{arg.Exception.Message}```");
                 };
+                
+                */
 
                 #endregion
             }

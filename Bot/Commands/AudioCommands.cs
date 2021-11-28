@@ -6,6 +6,7 @@ using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using DSharpPlus.Lavalink;
+using DSharpPlus.SlashCommands;
 using Microsoft.Extensions.Logging;
 
 namespace Bot.Commands
@@ -21,7 +22,8 @@ namespace Bot.Commands
 
     }
 
-    public class AudioCommands : BaseCommandModule
+    [Group("audio")]
+    public class AudioCommands : ApplicationCommandModule
     {
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
         public ILogger<BaseDiscordClient> Logger { private get; set; }
@@ -29,14 +31,18 @@ namespace Bot.Commands
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
         // public GuildAudioPlayer Player { private get; set; }
 
-        [Command, Aliases("j")]
+        [SlashCommand("join", "Have the bot join the voice channel that you're in.")]
         [Description("Joins the voice channel that you are currently in.")]
-        public async Task Join(CommandContext ctx, DiscordChannel channel)
+        public async Task Join(InteractionContext ctx, DiscordChannel channel = null)
         {
+            channel ??= ctx.Member.VoiceState.Channel;
+
             var lava = ctx.Client.GetLavalink();
             if (!lava.ConnectedNodes.Any())
             {
-                await ctx.RespondAsync(AudioCommandErrors.LavaLinkNotSetup);
+                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                    new DiscordInteractionResponseBuilder().WithContent(
+                        AudioCommandErrors.LavaLinkNotSetup));
                 return;
             }
 
@@ -44,35 +50,37 @@ namespace Bot.Commands
 
             if (channel.Type != ChannelType.Voice)
             {
-                await ctx.RespondAsync("Not a valid voice channel.");
+                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                    new DiscordInteractionResponseBuilder().WithContent(
+                        "Not a valid voice channel."));
                 return;
             }
 
             await node.ConnectAsync(channel);
-            await ctx.RespondAsync($"Joined {channel.Name}!");
+            await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                new DiscordInteractionResponseBuilder().WithContent(
+                    $"Joined {channel.Name}!"));
         }
 
-        [Command]
-        public async Task Join(CommandContext ctx)
+        [SlashCommand("disconnect", "Leave the current voice channel and stop audio playback.")]
+        [Description("Leaves the voice channel and stops the audio playback session.")]
+        public async Task Leave(InteractionContext ctx, DiscordChannel channel)
         {
-            var channel = ctx.Member.VoiceState?.Channel;
+            channel ??= ctx.Guild.CurrentMember.VoiceState?.Channel;
             if (channel == null)
             {
-                await ctx.RespondAsync("Please connect to a voice channel before the bot joins.");
+                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                    new DiscordInteractionResponseBuilder().WithContent(
+                        "The bot isn't currently in a voice channel."));
                 return;
             }
 
-            await Join(ctx, channel);
-        }
-
-        [Command("leave"), Aliases("dc")]
-        [Description("Leaves the voice channel and stops the audio playback session.")]
-        public async Task Leave(CommandContext ctx, DiscordChannel channel)
-        {
             var lava = ctx.Client.GetLavalink();
             if (!lava.ConnectedNodes.Any())
             {
-                await ctx.RespondAsync(AudioCommandErrors.LavaLinkNotSetup);
+                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                    new DiscordInteractionResponseBuilder().WithContent(
+                        AudioCommandErrors.LavaLinkNotSetup));
                 return;
             }
 
@@ -80,41 +88,37 @@ namespace Bot.Commands
 
             if (channel.Type != ChannelType.Voice)
             {
-                await ctx.RespondAsync("Not a valid voice channel.");
+                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                    new DiscordInteractionResponseBuilder().WithContent(
+                        "Not a valid voice channel."));
                 return;
             }
 
             var conn = node.GetGuildConnection(channel.Guild);
             if (conn == null)
             {
-                await ctx.RespondAsync(AudioCommandErrors.AudioServerNotConnected);
+                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                    new DiscordInteractionResponseBuilder().WithContent(
+                        AudioCommandErrors.AudioServerNotConnected));
                 return;
             }
 
             await conn.DisconnectAsync();
-            await ctx.RespondAsync($"Left {channel.Name}!");
+            await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                new DiscordInteractionResponseBuilder().WithContent(
+                    $"Left {channel.Name}!"));
         }
 
-        [Command("leave")]
-        public async Task Leave(CommandContext ctx)
-        {
-            var channel = ctx.Guild.CurrentMember.VoiceState?.Channel;
-            if (channel == null)
-            {
-                await ctx.RespondAsync("The bot isn't currently in a voice channel.");
-            }
-
-            await Leave(ctx, channel);
-        }
-
-        [Command("play"), Aliases("p")]
+        [SlashCommand("play", "Play a song or video in a voice channel.")]
         [Description("Plays a song from a link. Only YouTube links are currently known to be supported.\n" +
                      "Searching by title will be added in the near future.")]
-        public async Task Play(CommandContext ctx, [RemainingText] string search)
+        public async Task Play(InteractionContext ctx, string search)
         {
-            if (ctx.Member.VoiceState == null || ctx.Member.VoiceState.Channel == null)
+            if (ctx.Member.VoiceState?.Channel == null)
             {
-                await ctx.RespondAsync("You are not in a voice channel.");
+                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                    new DiscordInteractionResponseBuilder().WithContent(
+                        "You are not in a voice channel."));
                 return;
             }
 
@@ -125,7 +129,9 @@ namespace Bot.Commands
 
             if (conn == null)
             {
-                await ctx.RespondAsync(AudioCommandErrors.AudioServerNotConnected);
+                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                    new DiscordInteractionResponseBuilder().WithContent(
+                        AudioCommandErrors.AudioServerNotConnected));
                 return;
             }
 
@@ -135,7 +141,9 @@ namespace Bot.Commands
 
             if (loadResult.LoadResultType is LavalinkLoadResultType.LoadFailed or LavalinkLoadResultType.NoMatches)
             {
-                await ctx.RespondAsync($"Track search failed for {search}.");
+                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                    new DiscordInteractionResponseBuilder().WithContent(
+                        $"Track search failed for {search}."));
                 return;
             }
 
@@ -143,16 +151,20 @@ namespace Bot.Commands
 
             await conn.PlayAsync(track);
 
-            await ctx.RespondAsync($"Now playing {track.Title}!");
+            await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                new DiscordInteractionResponseBuilder().WithContent(
+                    $"Now playing {track.Title}!"));
         }
 
-        [Command("pause"), Aliases("stop")]
+        [SlashCommand("pause", "Pause audio playback")]
         [Description("Pauses audio playback.")]
-        public async Task Pause(CommandContext ctx)
+        public async Task Pause(InteractionContext ctx)
         {
             if (ctx.Member.VoiceState == null || ctx.Member.VoiceState.Channel == null)
             {
-                await ctx.RespondAsync("You are not in a voice channel.");
+                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                    new DiscordInteractionResponseBuilder().WithContent(
+                        "You are not in a voice channel."));
                 return;
             }
 
@@ -162,55 +174,21 @@ namespace Bot.Commands
 
             if (conn == null)
             {
-                await ctx.RespondAsync(AudioCommandErrors.AudioServerNotConnected);
+                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                    new DiscordInteractionResponseBuilder().WithContent(
+                        AudioCommandErrors.AudioServerNotConnected));
                 return;
             }
 
             if (conn.CurrentState.CurrentTrack == null)
             {
-                await ctx.RespondAsync("There are no tracks loaded.");
+                await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
+                    new DiscordInteractionResponseBuilder().WithContent(
+                        "There are no tracks loaded."));
                 return;
             }
 
             await conn.PauseAsync();
         }
-        /* TODO: Implement playing and queuing multiple urls.
-        [Command("play")]
-        public async Task Play(CommandContext ctx, params Uri[] uris)
-        {
-            if (ctx.Member.VoiceState == null || ctx.Member.VoiceState.Channel == null)
-            {
-                await ctx.RespondAsync("You are not in a voice channel.");
-                return;
-            }
-
-            var lava = ctx.Client.GetLavalink();
-            var node = lava.ConnectedNodes.Values.First();
-
-            var conn = node.GetGuildConnection(ctx.Member.VoiceState.Guild);
-
-            if (conn == null)
-            {
-                await ctx.RespondAsync("Could not connect to audio server.");
-                return;
-            }
-
-            var loadResult = await node.Rest.GetTracksAsync(search);
-            {
-            }
-
-            if (loadResult.LoadResultType is LavalinkLoadResultType.LoadFailed or LavalinkLoadResultType.NoMatches)
-            {
-                await ctx.RespondAsync($"Track search failed for {search}.");
-                return;
-            }
-
-            var track = loadResult.Tracks.First();
-
-            await conn.PlayAsync(track);
-
-            await ctx.RespondAsync($"Now playing {track.Title}!");
-        } 
-        */
     }
 }

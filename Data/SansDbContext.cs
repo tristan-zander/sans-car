@@ -11,7 +11,6 @@ namespace Data
         private string ConnectionString { get; }
 
         public DbSet<Guild> Guilds { get; set; }
-        public DbSet<DiscordChannel> Channels { get; set; }
         public DbSet<Quote> Quotes { get; set; }
 
         public SansDbContext()

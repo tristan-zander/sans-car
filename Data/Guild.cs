@@ -20,8 +20,6 @@ namespace Data
         public bool AllowQuotes { get; set; } = true;
         public List<Quote> Quotes { get; set; } = new List<Quote>();
         public bool EnableQuoteChannel { get; set; } = false;
-        public DiscordChannel? QuoteChannel { get; set; }
-        public bool AllowAudio { get; set; } = true;
-        public AudioPlayer? AudioPlayer { get; set; }
+        public ulong? QuoteChannel { get; set; }
     }
 }
