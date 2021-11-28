@@ -1,0 +1,28 @@
+{
+  "name": "sanscar",
+  "version": "1.0.0",
+  "description": "Discord bot and website, hosted at [the Sans Car website.](https://sanscar.net)",
+  "main": "index.js",
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged -r"
+    }
+  },
+  "scripts": {
+    "preinstall": "dotnet tool restore"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tristan-zander/sans-car.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tristan-zander/sans-car/issues"
+  },
+  "homepage": "https://github.com/tristan-zander/sans-car#readme",
+  "devDependencies": {
+    "husky": "^7.0.4",
+    "lint-staged": "^12.1.2"
+  }
+}
