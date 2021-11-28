@@ -1,4 +1,9 @@
-﻿using System;
+// Licensed under the Mozilla Public License 2.0.
+// Usage of these files must be in agreement with the license.
+//
+// You may find a copy of the license at https://www.mozilla.org/en-US/MPL/2.0/
+
+using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -21,156 +26,156 @@ using LavalinkConfiguration = DSharpPlus.Lavalink.LavalinkConfiguration;
 
 namespace Bot
 {
-    class Program
-    {
-        static void Main(string[] args)
-        {
-            var client = RunBot(args).GetAwaiter().GetResult();
+	class Program
+	{
+		static void Main(string[] args)
+		{
+			var client = RunBot(args).GetAwaiter().GetResult();
 
-            Task.Delay(-1).Wait();
+			Task.Delay(-1).Wait();
 
-            // TODO: be able to restart the bot on a whim if you're an admin.
-            client.StopAsync().Wait();
-        }
+			// TODO: be able to restart the bot on a whim if you're an admin.
+			client.StopAsync().Wait();
+		}
 
-        static async Task<DiscordShardedClient> RunBot(string[] args)
-        {
-            #region InitialBotConfig
+		static async Task<DiscordShardedClient> RunBot(string[] args)
+		{
+			#region InitialBotConfig
 
-            var dotnetEnvironment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
-            var isDevelopment = dotnetEnvironment is "Development";
+			var dotnetEnvironment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
+			var isDevelopment = dotnetEnvironment is "Development";
 
-            var builder = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("config.json", true)
-                .AddEnvironmentVariables()
-                .AddCommandLine(args);
-            if (isDevelopment)
-            {
-                builder.AddUserSecrets<Program>();
-            }
+			var builder = new ConfigurationBuilder()
+				.SetBasePath(Directory.GetCurrentDirectory())
+				.AddJsonFile("config.json", true)
+				.AddEnvironmentVariables()
+				.AddCommandLine(args);
+			if (isDevelopment)
+			{
+				builder.AddUserSecrets<Program>();
+			}
 
-            var config = builder.Build();
+			var config = builder.Build();
 
-            var discordConfiguration = new DiscordConfiguration
-            {
-                Token = config["Bot:Token"],
-                TokenType = TokenType.Bot,
-                Intents = DiscordIntents.AllUnprivileged
-            };
+			var discordConfiguration = new DiscordConfiguration
+			{
+				Token = config["Bot:Token"],
+				TokenType = TokenType.Bot,
+				Intents = DiscordIntents.AllUnprivileged
+			};
 
-            var bot = new DiscordShardedClient(discordConfiguration);
+			var bot = new DiscordShardedClient(discordConfiguration);
 
-            await bot.UseInteractivityAsync(new InteractivityConfiguration
-            {
-                PollBehaviour = PollBehaviour.DeleteEmojis,
-                Timeout = TimeSpan.FromSeconds(30),
-                PaginationBehaviour = PaginationBehaviour.WrapAround,
-            });
+			await bot.UseInteractivityAsync(new InteractivityConfiguration
+			{
+				PollBehaviour = PollBehaviour.DeleteEmojis,
+				Timeout = TimeSpan.FromSeconds(30),
+				PaginationBehaviour = PaginationBehaviour.WrapAround,
+			});
 
-            var dbContext = new SansDbContext(config["Database:ConnectionString"]);
+			var dbContext = new SansDbContext(config["Database:ConnectionString"]);
 
-            var services = new ServiceCollection()
-                .AddSingleton(bot.Logger)
-                .AddSingleton(dbContext)
-                .BuildServiceProvider();
+			var services = new ServiceCollection()
+				.AddSingleton(bot.Logger)
+				.AddSingleton(dbContext)
+				.BuildServiceProvider();
 
-            var botConfig = config.GetSection("Bot").Get<BotConfiguration>();
-            var commands = await bot.UseCommandsNextAsync(
-                new CommandsNextConfiguration
-                {
-                    StringPrefixes = botConfig.Prefixes ?? new[] { "sans ", "s?" },
-                    Services = services
-                });
+			var botConfig = config.GetSection("Bot").Get<BotConfiguration>();
+			var commands = await bot.UseCommandsNextAsync(
+				new CommandsNextConfiguration
+				{
+					StringPrefixes = botConfig.Prefixes ?? new[] { "sans ", "s?" },
+					Services = services
+				});
 
-            foreach (var shard in bot.ShardClients.Keys)
-            {
-                commands[shard]?.RegisterCommands(Assembly.GetExecutingAssembly());
+			foreach (var shard in bot.ShardClients.Keys)
+			{
+				commands[shard]?.RegisterCommands(Assembly.GetExecutingAssembly());
 
-                #region OnCommandError
+				#region OnCommandError
 
-                commands[shard].CommandErrored += async (ev, arg) =>
-                {
+				commands[shard].CommandErrored += async (ev, arg) =>
+				{
 
 
-                    switch (arg.Exception)
-                    {
-                        case CommandNotFoundException or ArgumentException:
-                            return;
-                        case DbUpdateConcurrencyException e:
-                            {
-                                foreach (var entry in e.Entries)
-                                {
-                                    var proposedValues = entry.CurrentValues;
-                                    var databaseValues = await entry.GetDatabaseValuesAsync();
+					switch (arg.Exception)
+					{
+						case CommandNotFoundException or ArgumentException:
+							return;
+						case DbUpdateConcurrencyException e:
+							{
+								foreach (var entry in e.Entries)
+								{
+									var proposedValues = entry.CurrentValues;
+									var databaseValues = await entry.GetDatabaseValuesAsync();
 
-                                    if (databaseValues == null)
-                                    {
-                                        // We probably did an update with a database entry that doesn't exist here.
-                                        entry.OriginalValues.SetValues(proposedValues);
+									if (databaseValues == null)
+									{
+										// We probably did an update with a database entry that doesn't exist here.
+										entry.OriginalValues.SetValues(proposedValues);
 
-                                        continue;
-                                    }
+										continue;
+									}
 
-                                    // Otherwise prioritize the database values.
-                                    entry.OriginalValues.SetValues(databaseValues);
-                                }
+									// Otherwise prioritize the database values.
+									entry.OriginalValues.SetValues(databaseValues);
+								}
 
-                                await dbContext.SaveChangesAsync();
-                                break;
-                            }
-                    }
+								await dbContext.SaveChangesAsync();
+								break;
+							}
+					}
 
-                    bot.Logger.LogError(arg.Exception, "CommandsNext command failed");
+					bot.Logger.LogError(arg.Exception, "CommandsNext command failed");
 
-                    // TODO: Send the exception to the database.
+					// TODO: Send the exception to the database.
 
-                    await arg.Context.RespondAsync($"The bot ran into an error while trying to execute your command.\n```{arg.Exception.Message}```");
-                };
+					await arg.Context.RespondAsync($"The bot ran into an error while trying to execute your command.\n```{arg.Exception.Message}```");
+				};
 
-                #endregion
+				#endregion
 
-            }
+			}
 
-            var searchCommands = new SearchCommands(bot.Logger, dbContext);
-            bot.MessageCreated += searchCommands.SearchCommandsEvent;
+			var searchCommands = new SearchCommands(bot.Logger, dbContext);
+			bot.MessageCreated += searchCommands.SearchCommandsEvent;
 
-            #endregion InitialBotConfig
+			#endregion InitialBotConfig
 
-            await bot.StartAsync();
+			await bot.StartAsync();
 
-            #region LavaLinkConfig
+			#region LavaLinkConfig
 
-            var lavalinkSettings = config.GetSection("Lavalink").Get<Data.LavalinkConfiguration>();
-            var endpoint = new ConnectionEndpoint
-            {
-                Hostname = lavalinkSettings.Address, // From your server configuration.
-                Port = lavalinkSettings.Port // From your server configuration
-            };
+			var lavalinkSettings = config.GetSection("Lavalink").Get<Data.LavalinkConfiguration>();
+			var endpoint = new ConnectionEndpoint
+			{
+				Hostname = lavalinkSettings.Address, // From your server configuration.
+				Port = lavalinkSettings.Port // From your server configuration
+			};
 
-            var lavalinkConfig = new LavalinkConfiguration
-            {
-                // TODO: Get password from config
-                Password = lavalinkSettings.Password, // From your server configuration.
-                RestEndpoint = endpoint,
-                SocketEndpoint = endpoint
-            };
+			var lavalinkConfig = new LavalinkConfiguration
+			{
+				// TODO: Get password from config
+				Password = lavalinkSettings.Password, // From your server configuration.
+				RestEndpoint = endpoint,
+				SocketEndpoint = endpoint
+			};
 
-            var lavalink = await bot.UseLavalinkAsync();
-            var linkResults = lavalink.Values.Select(link => link.ConnectAsync(lavalinkConfig));
-            foreach (var linkResult in linkResults)
-            {
-                await linkResult;
-            }
+			var lavalink = await bot.UseLavalinkAsync();
+			var linkResults = lavalink.Values.Select(link => link.ConnectAsync(lavalinkConfig));
+			foreach (var linkResult in linkResults)
+			{
+				await linkResult;
+			}
 
-            #endregion
+			#endregion
 
-            /* TODO: Add OAuth to the website and implement this.
+			/* TODO: Add OAuth to the website and implement this.
             await bot.UpdateStatusAsync(
                 new DiscordActivity("Type \"sans help\" for help.", ActivityType.Playing));
             */
 
-            return bot;
-        }
-    }
+			return bot;
+		}
+	}
 }

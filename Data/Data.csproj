@@ -21,6 +21,9 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Content Include="..\.editorconfig">
+        <Link>.editorconfig</Link>
+      </Content>
       <Content Include="..\.github\workflows\deploy-ssh.yml">
         <Link>.github\workflows\deploy-ssh.yml</Link>
       </Content>
